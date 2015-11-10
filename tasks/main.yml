@@ -1,0 +1,33 @@
+---
+# tasks file for sa-box-jenkins
+
+- name: Jenkins | Install java
+  include: "{{root_dir}}/tasks_java.yml"
+  when: java_version is defined
+  sudo: yes
+
+
+- name: Jenkins | Ensure dependencies are installed.
+  apt: pkg=curl state=installed
+  sudo: yes
+
+- name: Jenkins | Add Jenkins apt repository key.
+  apt_key: url="http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key" state=present
+  sudo: yes
+
+- name: Jenkins | Add Jenkins apt repository.
+  apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
+  sudo: yes
+
+- name: Jenkins | Ensure Jenkins is installed.
+  apt: pkg=jenkins state=installed
+  sudo: yes
+
+- name: Jenkins | Plugins
+  include: "plugins.yml"
+
+- name: Jenkins | Users
+  include: "users.yml"
+
+- name: Jenkins | Nginx proxy
+  include: "nginx_proxy.yml"

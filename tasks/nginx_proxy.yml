@@ -1,0 +1,47 @@
+---
+  - include: "{{root_dir}}/tasks_nginx.yml"
+
+#  - name: Proxy | Copy SSL Certificates
+#    copy: src={{ssl_dir_path}}/{{item}} dest={{ssl_install_path}}/{{item}}
+#    with_items: ssl_files
+#    sudo: yes
+#    tags:
+#      - proxy
+#      - update
+
+  - name: Proxy | TEMPORARY - generate self-signed certificate
+    include: '{{root_dir}}/use/__create_selfsigned_cert.yml fqdn="{{ssl_key_fqdn}}" key="{{ssl_key_name}}" crt="{{ssl_cert_name}}" target_dir="{{ssl_install_path}}"'
+    tags:
+      - proxy
+      - update
+
+  - name: Proxy | Generate nginx dhparam.pem if not exists
+    command: openssl dhparam -out {{ssl_install_path}}/dhparam.pem 4096 creates={{ssl_install_path}}/dhparam.pem
+    sudo: yes
+    tags: proxy
+
+  - name: Proxy | Temporary - use pregenerated pem
+    copy: src={{role_dir}}/files/nginx/dhparam.pem dest={{ssl_install_path}}/dhparam.pem
+    ignore_errors: yes
+    sudo: yes
+    tags:
+      - proxy
+
+  - name: Proxy | Copy Nginx configuration
+    template: src={{role_dir}}/templates/proxy/nginx.conf.j2 dest=/etc/nginx/sites-available/proxy
+    sudo: yes
+    tags:
+      - proxy
+      - update
+
+  - name: Proxy | Enable website
+    command: ln -fs /etc/nginx/sites-available/proxy /etc/nginx/sites-enabled/proxy
+    sudo: yes
+    tags: proxy
+
+  - name: Proxy | Restart Nginx
+    command: /etc/init.d/nginx restart
+    sudo: yes
+    tags:
+      - proxy
+      - update
