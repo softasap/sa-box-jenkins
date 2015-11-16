@@ -23,7 +23,7 @@
   become_user: jenkins
 
   # workaround over X-CLI2-PORT error
-- wait_for: port=8080 delay=10
+- wait_for: port=8080 delay=20
   when: jenkins_users_present|failed
 
 - name: Jenkins | Create Users

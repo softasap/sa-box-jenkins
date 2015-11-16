@@ -17,12 +17,13 @@
 
   - name: Proxy | Generate nginx dhparam.pem if not exists
     command: openssl dhparam -out {{ssl_install_path}}/dhparam.pem 4096 creates={{ssl_install_path}}/dhparam.pem
+    when: not option_use_pregenerated_pem
     sudo: yes
     tags: proxy
 
   - name: Proxy | Temporary - use pregenerated pem
     copy: src={{role_dir}}/files/nginx/dhparam.pem dest={{ssl_install_path}}/dhparam.pem
-    ignore_errors: yes
+    when: option_use_pregenerated_pem
     sudo: yes
     tags:
       - proxy
