@@ -37,11 +37,12 @@
     - environment-script # https://wiki.jenkins-ci.org/display/JENKINS/Environment+Script+Plugin
     - git
     - ghprb # https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
-    - greenballs # https://wiki.jenkins-ci.org/display/JENKINS/Green+Balls
+#    - greenballs # https://wiki.jenkins-ci.org/display/JENKINS/Green+Balls
     - hipchat # https://wiki.jenkins-ci.org/display/JENKINS/HipChat+Plugin
     - junit # https://wiki.jenkins-ci.org/display/JENKINS/JUnit+Plugin
     - matrix-auth # https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Authorization+Strategy+Plugin
     - matrix-project #https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Project+Plugin
+    - modernstatus http://updates.jenkins-ci.org/latest/modernstatus.hpi
     - parameterized-trigger #https://wiki.jenkins-ci.org/display/JENKINS/Parameterized+Trigger+Plugin
     - rebuild # https://wiki.jenkins-ci.org/display/JENKINS/Rebuild+Plugin
     - ssh
