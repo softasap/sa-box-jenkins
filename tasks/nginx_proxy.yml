@@ -18,31 +18,31 @@
   - name: Proxy | Generate nginx dhparam.pem if not exists
     command: openssl dhparam -out {{ssl_install_path}}/dhparam.pem 4096 creates={{ssl_install_path}}/dhparam.pem
     when: not option_use_pregenerated_pem
-    sudo: yes
+    become: yes
     tags: proxy
 
   - name: Proxy | Temporary - use pregenerated pem
     copy: src={{role_dir}}/files/nginx/dhparam.pem dest={{ssl_install_path}}/dhparam.pem
     when: option_use_pregenerated_pem
-    sudo: yes
+    become: yes
     tags:
       - proxy
 
   - name: Proxy | Copy Nginx configuration
     template: src={{role_dir}}/templates/proxy/nginx.conf.j2 dest=/etc/nginx/sites-available/proxy
-    sudo: yes
+    become: yes
     tags:
       - proxy
       - update
 
   - name: Proxy | Enable website
     command: ln -fs /etc/nginx/sites-available/proxy /etc/nginx/sites-enabled/proxy
-    sudo: yes
+    become: yes
     tags: proxy
 
   - name: Proxy | Restart Nginx
     command: /etc/init.d/nginx restart
-    sudo: yes
+    become: yes
     tags:
       - proxy
       - update

@@ -42,7 +42,7 @@
     - junit # https://wiki.jenkins-ci.org/display/JENKINS/JUnit+Plugin
     - matrix-auth # https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Authorization+Strategy+Plugin
     - matrix-project #https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Project+Plugin
-    - modernstatus http://updates.jenkins-ci.org/latest/modernstatus.hpi
+    - modernstatus # http://updates.jenkins-ci.org/latest/modernstatus.hpi
     - parameterized-trigger #https://wiki.jenkins-ci.org/display/JENKINS/Parameterized+Trigger+Plugin
     - rebuild # https://wiki.jenkins-ci.org/display/JENKINS/Rebuild+Plugin
     - ssh

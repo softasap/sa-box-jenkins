@@ -9,12 +9,12 @@
   template: src={{role_dir}}/files/jenkins/anonymous_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
   when: jenkins_users_present|failed
   register: configuration
-  sudo: yes
+  become: yes
 
 - name: Jenkins | Forced restart
   service: name=jenkins state=restarted
   when: jenkins_users_present|failed
-  sudo: yes
+  become: yes
 
 - name: Jenkins | Create User groovy Script
   template: src="{{role_dir}}/files/jenkins/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
@@ -38,9 +38,9 @@
 - name: Jenkins CI | Revolution! Return normal production config back
   template: src={{role_dir}}/files/jenkins/production_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
   when: jenkins_users_present|failed
-  sudo: yes
+  become: yes
 
 - name: Jenkins | Forced restart
   service: name=jenkins state=restarted
   when: jenkins_users_present|failed
-  sudo: yes
+  become: yes
