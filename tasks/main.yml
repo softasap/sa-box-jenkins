@@ -2,7 +2,7 @@
 # tasks file for sa-box-jenkins
 
   - name: Jenkins | Install java
-    include: "{{root_dir}}/tasks_java.yml"
+    include: "tasks_java.yml"
     when: java_version is defined
     become: yes
 
