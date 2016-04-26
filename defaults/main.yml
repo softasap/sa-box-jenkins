@@ -1,8 +1,8 @@
 ---
 # defaults file for sa-box-jenkins
 
-  root_dir: PLEASE PROVIDE PATH TO ANSIBLE DEVELOPER RECIPES FOLDER
-  role_dir: "{{ lookup('pipe','pwd')|dirname }}"
+  root_dir: "{{ role_path }}"
+  role_dir: "{{ root_dir }}"
 
   option_use_pregenerated_pem: true
 

@@ -1,16 +1,16 @@
 ---
-  - include: "{{root_dir}}/tasks_nginx.yml"
+  - include: "tasks_nginx.yml"
 
 #  - name: Proxy | Copy SSL Certificates
 #    copy: src={{ssl_dir_path}}/{{item}} dest={{ssl_install_path}}/{{item}}
 #    with_items: ssl_files
-#    sudo: yes
+#    become: yes
 #    tags:
 #      - proxy
 #      - update
 
   - name: Proxy | TEMPORARY - generate self-signed certificate
-    include: '{{root_dir}}/use/__create_selfsigned_cert.yml fqdn="{{ssl_key_fqdn}}" key="{{ssl_key_name}}" crt="{{ssl_cert_name}}" target_dir="{{ssl_install_path}}"'
+    include: '__create_selfsigned_cert.yml fqdn="{{ssl_key_fqdn}}" key="{{ssl_key_name}}" crt="{{ssl_cert_name}}" target_dir="{{ssl_install_path}}"'
     tags:
       - proxy
       - update
