@@ -4,7 +4,7 @@
 #  - name: Proxy | Copy SSL Certificates
 #    copy: src={{ssl_dir_path}}/{{item}} dest={{ssl_install_path}}/{{item}}
 #    with_items: ssl_files
-#    sudo: yes
+#    become: yes
 #    tags:
 #      - proxy
 #      - update
