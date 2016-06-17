@@ -1,0 +1,11 @@
+---
+- hosts: jenkins-box
+  gather_facts: false
+
+  roles:
+    - role: jenkins
+      java_version: 8
+      jenkins_user:
+        - name: "Admin"
+          password: "321"
+          email: "no-reply@localhost"
