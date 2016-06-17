@@ -1,33 +1,20 @@
 ---
-# tasks file for sa-box-jenkins
+  - name: Main | Install Java
+    include: "java.yml"
+    tags: java
 
-  - name: Jenkins | Install java
-    include: "tasks_java.yml"
-    when: java_version is defined
-    become: yes
+  - name: Main | Install Jenkins
+    include: "jenkins.yml"
+    tags: jenkins
 
-
-  - name: Jenkins | Ensure dependencies are installed.
-    apt: pkg=curl state=installed
-    become: yes
-
-  - name: Jenkins | Add Jenkins apt repository key.
-    apt_key: url="http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key" state=present
-    become: yes
-
-  - name: Jenkins | Add Jenkins apt repository.
-    apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
-    become: yes
-
-  - name: Jenkins | Ensure Jenkins is installed.
-    apt: pkg=jenkins state=installed
-    become: yes
-
-  - name: Jenkins | Plugins
-    include: "plugins.yml"
-
-  - name: Jenkins | Users
+  - name: Main | Configure users
     include: "users.yml"
+    tags: users
 
-  - name: Jenkins | Nginx proxy
+  - name: Main | Install plugins
+    include: "plugins.yml"
+    tags: plugins
+
+  - name: Main | Setup Nginx proxy
     include: "nginx_proxy.yml"
+    tags: nginx

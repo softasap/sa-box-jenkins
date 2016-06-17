@@ -1,5 +1,5 @@
 ---
-  - include: "tasks_nginx.yml"
+  - include: "nginx.yml"
 
 #  - name: Proxy | Copy SSL Certificates
 #    copy: src={{ssl_dir_path}}/{{item}} dest={{ssl_install_path}}/{{item}}

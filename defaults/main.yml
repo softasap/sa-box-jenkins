@@ -1,6 +1,4 @@
 ---
-# defaults file for sa-box-jenkins
-
   root_dir: "{{ role_path }}"
   role_dir: "{{ root_dir }}"
 
@@ -9,23 +7,7 @@
   jenkins_jar_location: /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar
   jenkins_install_dir: /var/lib/jenkins
 
-  jenkins_connection_delay: 5
-  jenkins_connection_retries: 60
   jenkins_hostname: localhost
-
-  # Admin and deploy users are REQUIRED. Feel free to redefine or amend passwords
-  jenkins_users:
-    - {
-      name: "Admin",
-      password: "Flvby",
-      email: "no-reply@localhost"
-      }
-    - {
-      name: "deploy",
-      password: "Ltgkjq",
-      email: "no-reply@localhost"
-      }
-
 
   jenkins_plugins:
     - bitbucket
