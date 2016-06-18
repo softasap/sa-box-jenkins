@@ -1,6 +1,4 @@
-#
-# Credits: https://raw.githubusercontent.com/StarterSquad/prudentia/develop/prudentia/tasks/nginx.yml
-#
+# Credits to https://raw.githubusercontent.com/StarterSquad/prudentia/develop/prudentia/tasks/nginx.yml
 
 ---
   - name: Nginx | Check if is present

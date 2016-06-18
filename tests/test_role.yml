@@ -4,7 +4,3 @@
 
   roles:
     - role: jenkins
-      jenkins_users:
-        - name: "Admin"
-          password: "321"
-          email: "no-reply@localhost"

@@ -7,14 +7,16 @@
     include: "jenkins.yml"
     tags: jenkins
 
-  - name: Main | Configure users
-    include: "users.yml"
-    tags: users
-
   - name: Main | Install plugins
     include: "plugins.yml"
     tags: plugins
 
+  - name: Main | Configure users
+    include: "users.yml"
+    tags: users
+    when: jenkins_users is defined
+
   - name: Main | Setup Nginx proxy
     include: "nginx_proxy.yml"
     tags: nginx
+    when: setup_nginx_secure_site

@@ -22,10 +22,12 @@
 
   jenkins_url_prefix: ""
 
+  java_version: 8
+
+  setup_nginx_secure_site: false
+
   jenkins_domain: "vagrant.dev"
   jenkins_host: "jenkins"
-
-  java_version: 8
 
   option_use_pregenerated_pem: true
 
