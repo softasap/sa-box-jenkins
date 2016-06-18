@@ -2,8 +2,6 @@
   root_dir: "{{ role_path }}"
   role_dir: "{{ root_dir }}"
 
-  option_use_pregenerated_pem: true
-
   jenkins_jar_location: /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar
   jenkins_install_dir: /var/lib/jenkins
 
@@ -35,6 +33,10 @@
 
   jenkins_domain: "vagrant.dev"
   jenkins_host: "jenkins"
+
+  java_version: 8
+
+  option_use_pregenerated_pem: true
 
   ssl_key_fqdn:  "{{jenkins_host}}.{{jenkins_domain}}"
   ssl_key_name:  jenkins_selfsigned

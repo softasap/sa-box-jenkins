@@ -4,8 +4,14 @@
 
   roles:
     - role: jenkins
-      java_version: 8
       jenkins_users:
         - name: "Admin"
           password: "321"
           email: "no-reply@localhost"
+      jenkins_plugins:
+        - ghprb
+        - slack
+        - workflow-aggregator
+        - pipeline-stage-view
+        - github-organization-folder
+        - modernstatus
