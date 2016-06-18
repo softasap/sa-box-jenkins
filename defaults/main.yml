@@ -1,58 +1,35 @@
 ---
-# defaults file for sa-box-jenkins
-
   root_dir: "{{ role_path }}"
   role_dir: "{{ root_dir }}"
-
-  option_use_pregenerated_pem: true
 
   jenkins_jar_location: /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar
   jenkins_install_dir: /var/lib/jenkins
 
-  jenkins_connection_delay: 5
-  jenkins_connection_retries: 60
   jenkins_hostname: localhost
 
-  # Admin and deploy users are REQUIRED. Feel free to redefine or amend passwords
-  jenkins_users:
-    - {
-      name: "Admin",
-      password: "Flvby",
-      email: "no-reply@localhost"
-      }
-    - {
-      name: "deploy",
-      password: "Ltgkjq",
-      email: "no-reply@localhost"
-      }
-
-
   jenkins_plugins:
-    - bitbucket
-    - bitbucket-pullrequest-builder
-    - build-pipeline-plugin
-    - copyartifact # https://wiki.jenkins-ci.org/display/JENKINS/Copy+Artifact+Plugin
-    - credentials # https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin
-    - delivery-pipeline-plugin # https://wiki.jenkins-ci.org/display/JENKINS/Delivery+Pipeline+Plugin
-    - environment-script # https://wiki.jenkins-ci.org/display/JENKINS/Environment+Script+Plugin
-    - git
-    - ghprb # https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
-#    - greenballs # https://wiki.jenkins-ci.org/display/JENKINS/Green+Balls
-    - hipchat # https://wiki.jenkins-ci.org/display/JENKINS/HipChat+Plugin
-    - junit # https://wiki.jenkins-ci.org/display/JENKINS/JUnit+Plugin
-    - matrix-auth # https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Authorization+Strategy+Plugin
-    - matrix-project #https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Project+Plugin
-    - modernstatus # http://updates.jenkins-ci.org/latest/modernstatus.hpi
-    - parameterized-trigger #https://wiki.jenkins-ci.org/display/JENKINS/Parameterized+Trigger+Plugin
-    - rebuild # https://wiki.jenkins-ci.org/display/JENKINS/Rebuild+Plugin
-    - ssh
-    - s3 # https://wiki.jenkins-ci.org/display/JENKINS/S3+Plugin
-    - throttle-concurrents #https://wiki.jenkins-ci.org/display/JENKINS/Throttle+Concurrent+Builds+Plugin
+    - ghprb
+    - slack
+    - hipchat
+    - workflow-aggregator
+    - pipeline-stage-view
+    - github-organization-folder
+    - modernstatus
+    - environment-script
+    - rebuild
+    - throttle-concurrents
+    - s3
 
   jenkins_url_prefix: ""
 
+  java_version: 8
+
+  setup_nginx_secure_site: false
+
   jenkins_domain: "vagrant.dev"
   jenkins_host: "jenkins"
+
+  option_use_pregenerated_pem: true
 
   ssl_key_fqdn:  "{{jenkins_host}}.{{jenkins_domain}}"
   ssl_key_name:  jenkins_selfsigned

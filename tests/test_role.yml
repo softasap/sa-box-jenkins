@@ -1,0 +1,6 @@
+---
+- hosts: jenkins-box
+  gather_facts: false
+
+  roles:
+    - role: jenkins

@@ -1,46 +1,46 @@
-- name: Jenkins CI | Check users are provisioned
-  command: test -f {{jenkins_install_dir}}/users/admin/config.xml
-  ignore_errors: yes
-  register: jenkins_users_present
-  become: yes
-  become_user: jenkins
+---
+  - name: Users | Check users are provisioned
+    command: test -f {{jenkins_install_dir}}/users/admin/config.xml
+    ignore_errors: yes
+    register: jenkins_users_present
+    become: yes
 
-- name: Jenkins CI | Make anonymous to be god
-  template: src={{role_dir}}/files/jenkins/anonymous_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
-  when: jenkins_users_present|failed
-  register: configuration
-  become: yes
+  - name: Users | Make anonymous to be god
+    template: src="{{role_dir}}/files/jenkins/anonymous_config.xml.j2" dest="{{jenkins_install_dir}}/config.xml" owner=jenkins group=jenkins mode=644 backup=yes
+    when: jenkins_users_present|failed
+    register: configuration
+    become: yes
 
-- name: Jenkins | Forced restart
-  service: name=jenkins state=restarted
-  when: jenkins_users_present|failed
-  become: yes
+  - name: Users | Forced restart
+    service: name=jenkins state=restarted
+    when: jenkins_users_present|failed
+    become: yes
 
-- name: Jenkins | Create User groovy Script
-  template: src="{{role_dir}}/files/jenkins/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
-  when: jenkins_users_present|failed
-  become: yes
-  become_user: jenkins
+  - name: Users | Create User groovy Script
+    template: src="{{role_dir}}/files/jenkins/create-user.groovy.j2" dest="{{jenkins_install_dir}}/create-user.groovy" owner=jenkins group=jenkins mode=644
+    when: jenkins_users_present|failed
+    become: yes
 
-  # workaround over X-CLI2-PORT error
-- wait_for: port=8080 delay=20
-  when: jenkins_users_present|failed
+  - name: Users | Wait for Jenkins to start.
+    uri:
+      url: "http://{{ jenkins_hostname }}:8080"
+      status_code: 200
+    register: result
+    until: result.status == 200
+    retries: 30
+    delay: 1
+    when: jenkins_users_present|failed
 
-- name: Jenkins | Create Users
-  shell: "java -jar {{jenkins_jar_location}} -s http://localhost:8080/ groovy /var/lib/jenkins/create-user.groovy {{item.name}} {{item.password}} {{item.email}}"
-  with_items: jenkins_users
-  when: jenkins_users is defined and jenkins_users_present|failed
-  ignore_errors: yes
-  become: yes
-  become_user: jenkins
+  - name: Users | Create Users
+    command: >
+      java -jar {{ jenkins_jar_location }} -s http://{{ jenkins_hostname }}:8080{{ jenkins_url_prefix | default('') }}/ groovy {{jenkins_install_dir}}/create-user.groovy {{item.name}} {{item.password}} {{item.email}}
+    with_items: '{{jenkins_users}}'
+    when: jenkins_users is defined and jenkins_users_present|failed
+    ignore_errors: yes
+    become: yes
 
-
-- name: Jenkins CI | Revolution! Return normal production config back
-  template: src={{role_dir}}/files/jenkins/production_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
-  when: jenkins_users_present|failed
-  become: yes
-
-- name: Jenkins | Forced restart
-  service: name=jenkins state=restarted
-  when: jenkins_users_present|failed
-  become: yes
+  - name: Users | Put back production config
+    template: src={{role_dir}}/files/jenkins/production_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
+    when: jenkins_users_present|failed
+    become: yes
+    notify: restart jenkins

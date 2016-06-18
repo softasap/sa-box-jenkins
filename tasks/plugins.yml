@@ -1,38 +1,41 @@
-
 ---
 # Jenkins doesn't allow updates via CLI, though that is required before plugins
 # can be installed via CLI. See: https://gist.github.com/rowan-m/1026918
-- name: Jenkins | Create Jenkins updates folder.
+- name: Plugins | Create Jenkins updates folder.
   file:
-    path: /var/lib/jenkins/updates
+    path: "{{jenkins_install_dir}}/updates"
     owner: jenkins
     group: jenkins
     mode: 0755
     state: directory
   become: yes
 
-- name: Jenkins | Update Jenkins plugin data.
+- name: Plugins | Update Jenkins plugin data.
   shell: >
-    curl -L https://updates.jenkins-ci.org/update-center.json | sed '1d;$d' > /var/lib/jenkins/updates/default.json
-    creates=/var/lib/jenkins/updates/default.json
+    curl -L https://updates.jenkins-ci.org/update-center.json | sed '1d;$d' > {{jenkins_install_dir}}/updates/default.json
+    creates={{jenkins_install_dir}}/updates/default.json
   become: yes
 
-
-- name: Jenkins | Permissions for default.json updates info.
+- name: Plugins | Updates permissions for default.json.
   file:
-    path: /var/lib/jenkins/updates/default.json
+    path: "{{jenkins_install_dir}}/updates/default.json"
     owner: jenkins
     group: jenkins
     mode: 0755
   become: yes
 
-- wait_for: port=8080 delay=20
+- name: Plugins | Wait for Jenkins to start.
+  uri:
+    url: "http://{{ jenkins_hostname }}:8080"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 1
 
-- name: Jenkins | Install Jenkins plugins.
+- name: Plugins | Install Jenkins plugins.
   command: >
     java -jar {{ jenkins_jar_location }} -s http://{{ jenkins_hostname }}:8080{{ jenkins_url_prefix | default('') }}/ install-plugin {{ item }}
-    creates=/var/lib/jenkins/plugins/{{ item }}.jpi
-  with_items: jenkins_plugins
+  with_items: '{{jenkins_plugins}}'
   become: yes
-  become_user: jenkins
   notify: restart jenkins

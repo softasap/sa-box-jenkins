@@ -1,0 +1,23 @@
+---
+  - name: Jenkins | Ensure dependencies are installed.
+    apt: pkg={{item}} state=installed
+    with_items:
+      - curl
+      - git
+    become: yes
+
+  - name: Jenkins | Add Jenkins apt repository key.
+    apt_key: url="http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key" state=present
+    become: yes
+
+  - name: Jenkins | Add Jenkins apt repository.
+    apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
+    become: yes
+
+  - name: Jenkins | Install.
+    apt: update-cache=yes pkg=jenkins state=installed
+    become: yes
+
+  - name: Jenkins | Unlock Jenkins.
+    file: path={{jenkins_install_dir}}/jenkins.install.InstallUtil.lastExecVersion state=touch owner=jenkins group=jenkins
+    become: yes
