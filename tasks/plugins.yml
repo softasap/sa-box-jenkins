@@ -25,7 +25,13 @@
   become: yes
 
 - name: Plugins | Wait for Jenkins to start.
-  wait_for: port=8080 delay=3 timeout=30
+  uri:
+    url: "http://{{ jenkins_hostname }}:8080"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 1
 
 - name: Plugins | Install Jenkins plugins.
   command: >

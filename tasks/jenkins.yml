@@ -14,7 +14,7 @@
     apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
     become: yes
 
-  - name: Jenkins | Ensure Jenkins is installed.
+  - name: Jenkins | Install.
     apt: update-cache=yes pkg=jenkins state=installed
     become: yes
 

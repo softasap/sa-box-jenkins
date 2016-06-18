@@ -25,23 +25,26 @@
   when: jenkins_users_present|failed
   become: yes
 
-- name: Users | Wait for Jenkins to start
-  wait_for: port=8080 delay=3 timeout=30
+- name: Users | Wait for Jenkins to start.
+  uri:
+    url: "http://{{ jenkins_hostname }}:8080"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 1
   when: jenkins_users_present|failed
 
 - name: Users | Create Users
-  shell: "java -jar {{jenkins_jar_location}} -s http://localhost:8080/ groovy {{jenkins_install_dir}}/create-user.groovy {{item.name}} {{item.password}} {{item.email}}"
+  command: >
+    java -jar {{ jenkins_jar_location }} -s http://{{ jenkins_hostname }}:8080{{ jenkins_url_prefix | default('') }}/ groovy {{jenkins_install_dir}}/create-user.groovy {{item.name}} {{item.password}} {{item.email}}
   with_items: '{{jenkins_users}}'
   when: jenkins_users is defined and jenkins_users_present|failed
   ignore_errors: yes
   become: yes
 
-- name: Users | Revolution! Return normal production config back
+- name: Users | Put back production config
   template: src={{role_dir}}/files/jenkins/production_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
   when: jenkins_users_present|failed
   become: yes
-
-- name: Users | Forced restart
-  service: name=jenkins state=restarted
-  when: jenkins_users_present|failed
-  become: yes
+  notify: restart jenkins
