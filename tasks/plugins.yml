@@ -26,13 +26,54 @@
     mode: 0755
   become: yes
 
-- wait_for: port=8080 delay=20
+- wait_for: port=8080
 
-- name: Jenkins | Install Jenkins plugins.
-  command: >
-    java -jar {{ jenkins_jar_location }} -s http://{{ jenkins_hostname }}:8080{{ jenkins_url_prefix | default('') }}/ install-plugin {{ item }}
-    creates=/var/lib/jenkins/plugins/{{ item }}.jpi
-  with_items: jenkins_plugins
+- name: Jenkins | Get installed plugins
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/pluginManager/api/json?tree=plugins[shortName]&{{ jenkins_crumb_token }}"
+    return_content: yes
+  register: jenkins_installed_plugins
+
+- name: Jenkins | Install plugins
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/pluginManager/install?plugin.{{ item }}.default=on&{{ jenkins_crumb_token }}"
+    method: POST
+    status_code: [200, 302]
+  when: item not in jenkins_installed_plugins.json.plugins|map(attribute='shortName')|list
+  with_items: "{{ jenkins_plugins }}"
+
+- name: Jenkins | Wait for plugins to be installed
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/updateCenter/installStatus?{{ jenkins_crumb_token }}"
+    return_content: yes
+  register: jenkins_plugin_status
+  until: "'Pending' not in jenkins_plugin_status.json.data.jobs|map(attribute='installStatus')"
+  retries: 60
+  delay: 10
+
+- name: Jenkins | Check if we need to restart Jenkins to activate plugins
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/updateCenter/api/json\
+    ?tree=restartRequiredForCompletion&{{ jenkins_crumb_token }}"
+    return_content: yes
+  register: jenkins_restart_required
+
+- name: Jenkins | Restart Jenkins to activate new plugins
+  service: name=jenkins state=restarted
+  when: jenkins_restart_required.json.restartRequiredForCompletion|bool
   become: yes
-  become_user: jenkins
-  notify: restart jenkins
+
+- name: Jenkins | Wait for Jenkins to become available
+  wait_for: port=8080

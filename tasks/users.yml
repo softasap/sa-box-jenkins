@@ -1,20 +1,9 @@
 - name: Jenkins CI | Check users are provisioned
-  command: test -f {{jenkins_install_dir}}/users/admin/config.xml
+  command: test -f {{jenkins_install_dir}}/users/deploy/config.xml
   ignore_errors: yes
   register: jenkins_users_present
   become: yes
   become_user: jenkins
-
-- name: Jenkins CI | Make anonymous to be god
-  template: src={{role_dir}}/files/jenkins/anonymous_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
-  when: jenkins_users_present|failed
-  register: configuration
-  become: yes
-
-- name: Jenkins | Forced restart
-  service: name=jenkins state=restarted
-  when: jenkins_users_present|failed
-  become: yes
 
 - name: Jenkins | Create User groovy Script
   template: src="{{role_dir}}/files/jenkins/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
@@ -22,25 +11,26 @@
   become: yes
   become_user: jenkins
 
-  # workaround over X-CLI2-PORT error
-- wait_for: port=8080 delay=20
-  when: jenkins_users_present|failed
-
 - name: Jenkins | Create Users
-  shell: "java -jar {{jenkins_jar_location}} -s http://localhost:8080/ groovy /var/lib/jenkins/create-user.groovy {{item.name}} {{item.password}} {{item.email}}"
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    body: "script=$(</var/lib/jenkins/create-user.groovy {{item.name}} {{item.password}} {{item.email}})"
+    url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
+    method: POST
+    status_code: [200, 302]
   with_items: jenkins_users
   when: jenkins_users is defined and jenkins_users_present|failed
   ignore_errors: yes
   become: yes
   become_user: jenkins
 
-
-- name: Jenkins CI | Revolution! Return normal production config back
-  template: src={{role_dir}}/files/jenkins/production_config.xml.j2 dest={{jenkins_install_dir}}/config.xml owner=jenkins group=jenkins mode=644 backup=yes
-  when: jenkins_users_present|failed
-  become: yes
-
 - name: Jenkins | Forced restart
   service: name=jenkins state=restarted
   when: jenkins_users_present|failed
   become: yes
+
+
+- wait_for: port=8080 delay=20
+  when: jenkins_users_present|failed
