@@ -13,11 +13,14 @@
   jenkins_connection_retries: 60
   jenkins_hostname: localhost
 
+  jenkins_admin_user: Admin
+  jenkins_admin_password: Flvby
   # Admin and deploy users are REQUIRED. Feel free to redefine or amend passwords
+
   jenkins_users:
     - {
-      name: "Admin",
-      password: "Flvby",
+      name: "{{jenkins_admin_user}}",
+      password: "{{jenkins_admin_password}}",
       email: "no-reply@localhost"
       }
     - {

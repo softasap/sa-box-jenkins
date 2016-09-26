@@ -23,11 +23,27 @@
     apt: pkg=jenkins state=installed
     become: yes
 
-  - name: Jenkins | Plugins
-    include: "plugins.yml"
-
   - name: Jenkins | Users
     include: "users.yml"
+
+  - name: Jenkins | Get Jenkins crumb
+    uri:
+      user: "{{jenkins_admin_user}}"
+      password: "{{ jenkins_admin_password }}"
+      force_basic_auth: yes
+      url: "http://127.0.0.1:8080/crumbIssuer/api/json"
+      return_content: yes
+    register: crumb_token
+    until: crumb_token.content.find('Please wait while Jenkins is getting ready') == -1
+    retries: 10
+    delay: 5
+
+  - name: Set crumb token
+    set_fact:
+      crumb: "{{ crumb_token.json.crumbRequestField }}={{ crumb_token.json.crumb }}"
+
+  - name: Jenkins | Plugins
+    include: "plugins.yml"
 
   - name: Jenkins | Nginx proxy
     include: "nginx_proxy.yml"
