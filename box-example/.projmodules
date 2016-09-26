@@ -1,0 +1,9 @@
+[submodule "roles/sa-vnc-remote-desktop"]
+        path = roles/sa-vnc-remote-desktop
+        url = https://github.com/softasap/sa-vnc-remote-desktop.git
+[submodule "roles/sa-box-bootstrap"]
+        path = roles/sa-box-bootstrap
+        url = https://github.com/softasap/sa-box-bootstrap.git
+[submodule "roles/sa-box-jenkins"]
+        path = roles/sa-box-jenkins
+        url = https://github.com/softasap/sa-box-jenkins.git

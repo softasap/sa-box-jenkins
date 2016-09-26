@@ -1,0 +1,2 @@
+[jenkins]
+192.168.0.17 ansible_ssh_user=jenkins

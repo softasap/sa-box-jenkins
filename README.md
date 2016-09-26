@@ -1,6 +1,8 @@
 sa-box-jenkins
 ==============
 
+UPD sept 2016:  now installs Jenkins 2 by default. See `box-example` role folder to get example of standalone deployment script for your organization.
+
 [![Build Status](https://travis-ci.org/softasap/sa-box-jankins.svg?branch=master)](https://travis-ci.org/softasap/sa-box-jenkins)
 
 Example of usage:
@@ -182,12 +184,22 @@ and ansible role called  *sa-box-bootstrap* responsible for box securing steps (
         path = roles/sa-box-jenkins
         url = git@github.com:softasap/sa-box-jenkins.git</pre>
 - *hosts* - list here the initial box credentials, that were provided to you for the server. Note: jenkins-bootstrap assumes, you have the fresh box with the root access only. If your box already secured, adjust credentials appropriately
-<pre>
+
+UPDATE Sep 2016, ansible2 - now you need to split into to different inventory files, because different users are used:
+
+hostsbootstrap:
+```
 [jenkins-bootstrap]
 jenkins_bootstrap ansible_ssh_host=192.168.0.17 ansible_ssh_user=yourrootuser ansible_ssh_pass=yourpassword
+```
+
+hosts:
+```
 [jenkins]
 jenkins ansible_ssh_host=192.168.0.17 ansible_ssh_user=jenkins
-</pre>
+```
+
+
 - *jenkins_vars.yml* - set here specific environment overrides, like your preferred deploy user name and keys.
 - *jenkins_bootstrap.yml* - First step - box securing. Creates jenkins user, and secures the box using sa-box-bootstrap role.
 [See more details](https://github.com/softasap/sa-box-bootstrap) about the sa-box-bootstrap role
@@ -221,9 +233,13 @@ You need to override:
 - jenkins_authorized_keys (this is list of the keys, that allow you to login to Jenkins box under jenkins)
 - jenkins_domain - your agency domain
 - jenkins_host - name of the jenkins host (Site will be binded to jenkins_host.jenkins_domain)
+- jenkins_admin_password: SECURE PASSWORD
+
+YOu can override:
+
 - java_version - your Java choice (6,7,8 supported)
 
-<pre>
+```
 jenkins_user: jenkins
 jenkins_authorized_keys:
   - "{{playbook_dir}}/components/files/ssh/vyacheslav.pub"
@@ -231,29 +247,27 @@ jenkins_authorized_keys:
 jenkins_domain: "vagrant.dev"
 jenkins_host: "jenkins"
 
-java_version: 8
-</pre>
+jenkins_admin_password: Flvby
 
--jenkins_users list of users with passwords to create. Admin and deploy are required users.
+java_version: 8
+```
+
+-jenkins_users list of users with passwords to create.  Deploy is required users. Admin is precreated.
 Admin is used to manage instance, deploy is used to access the artifacts via deployment scripts.
 If you won't override passwords, default one will be used (per role), which is not the best, for public deployments.
-<pre>
+```
+jenkins_admin_password: Flvby
 jenkins_users:
-  - {
-    name: "Admin",
-    password: "AAAdmin",
-    email: "no-reply@localhost"
-    }
   - {
     name: "deploy",
     password: "DeDeDeDeploy",
     email: "no-reply@localhost"
     }
-</pre>
+```
 
 - jenkins_plugins Your choice of plugins to install. By default:
 
-<pre>
+```
 jenkins_plugins:
   - bitbucket # https://wiki.jenkins-ci.org/display/JENKINS/BitBucket+Plugin
   - bitbucket-pullrequest-builder
@@ -274,7 +288,7 @@ jenkins_plugins:
   - ssh
   - s3 # https://wiki.jenkins-ci.org/display/JENKINS/S3+Plugin
   - throttle-concurrents #https://wiki.jenkins-ci.org/display/JENKINS/Throttle+Concurrent+Builds+Plugin
-</pre>
+```
 
 ## Code in action
 
@@ -282,8 +296,8 @@ Code can be downloaded from repository [https://github.com/Voronenko/devops-jenk
 In order to use it - fork it, adjust parameters to your needs, and use.
 
 Running is as simple as
-<pre>
+```
 ./setup_jenkins.sh
-</pre>
+```
 
 Welcome to the world of continious integration & deployment.
