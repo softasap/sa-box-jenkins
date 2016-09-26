@@ -30,27 +30,27 @@
 
   - name: Jenkins | Supress wizard mode
     lineinfile: dest="/etc/default/jenkins" insertbefore="^JENKINS_ARGS.*" line="JAVA_ARGS=\"{{ jenkins_java_args }}\""
-    when: jenkins_second_time_install
+    when: not (jenkins_second_time_install|failed)
     become: yes
 
   - name: Jenkins | Remove initial Jenkins password
     file: name=/var/lib/jenkins/secrets/initialAdminPassword state=absent
     ignore_errors: yes
-    when: jenkins_second_time_install
+    when: not (jenkins_second_time_install|failed)
 
   - name: Jenkins | Create Jenkins admin password hash
     shell: echo -n "{{ jenkins_admin_password }}{ansible_jenkins}" | sha256sum - | awk '{ print $1; }'
-    when: jenkins_second_time_install
+    when: not (jenkins_second_time_install|failed)
     register: jenkins_password_hash
 
   - name: Jenkins | Patch original password hash line
     lineinfile: dest="/var/lib/jenkins/users/admin/config.xml" regexp='^(\s)*<passwordHash>(.*)' line='      <passwordHash>ansible_jenkins:{{ jenkins_password_hash.stdout }}</passwordHash>' owner="jenkins"
     become: yes
-    when: jenkins_second_time_install
+    when: not (jenkins_second_time_install|failed)
 
   - name: Jenkins | Forced restart
     service: name=jenkins state=restarted
-    when: jenkins_second_time_install
+    when: not (jenkins_second_time_install|failed)
     become: yes
 
   - name: Jenkins | Get Jenkins crumb
@@ -75,8 +75,6 @@
 
   - name: Jenkins | Users
     include: "users.yml"
-
-  - fail: msg="New config file"
 
   - name: Jenkins | Nginx proxy
     include: "nginx_proxy.yml"
