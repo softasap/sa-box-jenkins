@@ -7,9 +7,11 @@ UPD sept 2016:  now installs Jenkins 2 by default. See `box-example` role folder
 
 Example of usage:
 
+```YAML
 - {
     role: "sa-box-jenkins"
   }
+```
 
 
 Dive into continious integration with Jenkins.
@@ -36,25 +38,25 @@ In order to install Jenkins, we will need:
 
  ### Install Java
  Easist way to install Java, is using apt-get package manager
- <pre>
+```
 sudo apt-get install python-software-properties
 sudo add-apt-repository ppa:webupd8team/java
 sudo apt-get update
-</pre>
+```
 Once you added ppa above, you can install java with the following command:
-<pre>
+```
 sudo apt-get install oracle-java8-installer
-</pre>
+```
 
 ### Get base Jenkins setup
 You will need to execut series of the commands, namely: add jenkins signing key,
 register jenkins apt sources, update package lists, and install Jenkins package.
-<pre>
+```
 wget -q -O - http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key | sudo apt-key add -
 sudo echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list
 sudo apt-get update
 sudo apt-get install jenkins
-</pre>
+```
 
 By default, it will install base Jenkins setup, which is insecure. You will
 need to go to the host were your Jenkins is installed, for example: http://jenkins-host:8080/.
@@ -136,7 +138,7 @@ Plugins are installed using Plugin manager on a Manage Jenkins Section.
 
 ### Put behind web server
 Usually I hide Jenkins behind nginx. Typical configuration looks like the one below
-<pre>
+```
 server {
   listen 443 ssl;
   server_name jenkins.vagrant.dev;
@@ -157,7 +159,7 @@ server {
   }
   ...
 }
-</pre>
+```
 
 ## Automated installation
 Do I install Jenkins manually each time? Of course not, I do it often for my customers.
@@ -173,7 +175,7 @@ that will be used by the playbook.
 In particular, it includes ansible- by default developer_recipes (repository with set of handy deployment recipes)
 and ansible role called  *sa-box-bootstrap* responsible for box securing steps (assuming you plan to put Jenkins on a remote hosts).
 
-<pre>
+```
 [submodule "public/ansible_developer_recipes"]
 	path = public/ansible_developer_recipes
 	url = git@github.com:Voronenko/ansible-developer_recipes.git
@@ -182,7 +184,8 @@ and ansible role called  *sa-box-bootstrap* responsible for box securing steps (
         url = git@github.com:softasap/sa-box-bootstrap.git
 [submodule "roles/sa-box-jenkins"]
         path = roles/sa-box-jenkins
-        url = git@github.com:softasap/sa-box-jenkins.git</pre>
+        url = git@github.com:softasap/sa-box-jenkins.git
+```
 - *hosts* - list here the initial box credentials, that were provided to you for the server. Note: jenkins-bootstrap assumes, you have the fresh box with the root access only. If your box already secured, adjust credentials appropriately
 
 UPDATE Sep 2016, ansible2 - now you need to split into to different inventory files, because different users are used:
@@ -205,7 +208,7 @@ jenkins ansible_ssh_host=192.168.0.17 ansible_ssh_user=jenkins
 [See more details](https://github.com/softasap/sa-box-bootstrap) about the sa-box-bootstrap role
 In order, to override params for *sa-box-bootstrap* - pass the parameters like in example below.
 
-<pre>
+```YAML
 - hosts: all
 
   vars_files:
@@ -215,17 +218,17 @@ In order, to override params for *sa-box-bootstrap* - pass the parameters like i
          role: "sa-box-bootstrap",
          root_dir: "{{playbook_dir}}/public/ansible_developer_recipes",
          deploy_user: "{{jenkins_user}}",
-         deploy_user_keys: "{{jenkins_authorized_keys}}"
+         deploy_user_authorized_keys: "{{jenkins_authorized_keys}}"
        }</pre>
 - *jenkins.yml* provisioning script that configures jenkins with set of plugins and users.
 - *jenkins_vars.yml* configuration options for jenkins deployment.
 - *setup_jenkins.sh* shell script that invokes deployment in two steps: initial box bootstraping & jenkins setup
-<pre>
+```
 #!/bin/sh
 
 ansible-playbook jenkins_bootstrap.yml --limit jenkins_bootstrap
 ansible-playbook jenkins.yml --limit jenkins
-</pre>
+```
 
 
 ## Configuration options for automated installation
@@ -237,9 +240,9 @@ You need to override:
 
 YOu can override:
 
+```
 - java_version - your Java choice (6,7,8 supported)
 
-```
 jenkins_user: jenkins
 jenkins_authorized_keys:
   - "{{playbook_dir}}/components/files/ssh/vyacheslav.pub"

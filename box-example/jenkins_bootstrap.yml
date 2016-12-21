@@ -7,7 +7,7 @@
      - {
          role: "sa-box-bootstrap",
          deploy_user: "{{jenkins_user}}",
-         deploy_user_keys: "{{jenkins_authorized_keys}}",
+         deploy_user_authorized_keys: "{{jenkins_authorized_keys}}",
          option_enforce_ssh_keys_login: false,
          option_file2ban: false
        }
