@@ -6,8 +6,27 @@
   become_user: jenkins
 
 - name: Jenkins | Create User groovy Script
-  template: src="{{role_dir}}/files/jenkins/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
+  template: src="{{role_dir}}/templates/groovy/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
   when: jenkins_users_present|failed
+  become: yes
+  become_user: jenkins
+
+- name: Jenkins | Enable global matrix strategy groovy Script
+  template: src="{{role_dir}}/templates/groovy/enable-matrix.groovy.j2" dest="/var/lib/jenkins/enable-matrix.groovy"
+  when: jenkins_users_present|failed
+  become: yes
+  become_user: jenkins
+
+- name: Jenkins | Enable global matrix authorization
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    body: "script=$(</var/lib/jenkins/enable-matrix.groovy)"
+    url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
+    method: POST
+    status_code: [200, 302]
+  when: jenkins_users is defined and jenkins_users_present|failed
   become: yes
   become_user: jenkins
 

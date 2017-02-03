@@ -9,31 +9,45 @@
 #      - proxy
 #      - update
 
-  - name: Proxy | TEMPORARY - generate self-signed certificate
-    include: '__create_selfsigned_cert.yml fqdn="{{ssl_key_fqdn}}" key="{{ssl_key_name}}" crt="{{ssl_cert_name}}" target_dir="{{ssl_install_path}}"'
+  - block:
+
+    - name: Proxy | TEMPORARY - generate self-signed certificate
+      include: '__create_selfsigned_cert.yml fqdn="{{ssl_key_fqdn}}" key="{{ssl_key_name}}" crt="{{ssl_cert_name}}" target_dir="{{ssl_install_path}}"'
+      tags:
+        - proxy
+        - update
+
+    - name: Proxy | Generate nginx dhparam.pem if not exists
+      command: openssl dhparam -out {{ssl_install_path}}/dhparam.pem 4096 creates={{ssl_install_path}}/dhparam.pem
+      when: not option_use_pregenerated_pem
+      become: yes
+      tags: proxy
+
+    - name: Proxy | Temporary - use pregenerated pem
+      copy: src={{role_dir}}/files/nginx/dhparam.pem dest={{ssl_install_path}}/dhparam.pem
+      when: option_use_pregenerated_pem
+      become: yes
+      tags:
+        - proxy
+
+    when: not option_serve_over_http
+
+  - name: Proxy | Copy Nginx configuration (http)
+    template: src={{role_dir}}/templates/proxy/plain_nginx.conf.j2 dest=/etc/nginx/sites-available/proxy
+    when: option_serve_over_http
+    become: yes
     tags:
       - proxy
       - update
 
-  - name: Proxy | Generate nginx dhparam.pem if not exists
-    command: openssl dhparam -out {{ssl_install_path}}/dhparam.pem 4096 creates={{ssl_install_path}}/dhparam.pem
-    when: not option_use_pregenerated_pem
-    become: yes
-    tags: proxy
-
-  - name: Proxy | Temporary - use pregenerated pem
-    copy: src={{role_dir}}/files/nginx/dhparam.pem dest={{ssl_install_path}}/dhparam.pem
-    when: option_use_pregenerated_pem
-    become: yes
-    tags:
-      - proxy
-
-  - name: Proxy | Copy Nginx configuration
+  - name: Proxy | Copy Nginx configuration (https)
     template: src={{role_dir}}/templates/proxy/nginx.conf.j2 dest=/etc/nginx/sites-available/proxy
+    when: not option_serve_over_http
     become: yes
     tags:
       - proxy
       - update
+
 
   - name: Proxy | Enable website
     command: ln -fs /etc/nginx/sites-available/proxy /etc/nginx/sites-enabled/proxy

@@ -5,6 +5,7 @@
   role_dir: "{{ role_path }}"
 
   option_use_pregenerated_pem: true
+  option_serve_over_http: false
 
   jenkins_install_dir: /var/lib/jenkins
 
