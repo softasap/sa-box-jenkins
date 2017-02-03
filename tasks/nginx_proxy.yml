@@ -3,7 +3,7 @@
 
 #  - name: Proxy | Copy SSL Certificates
 #    copy: src={{ssl_dir_path}}/{{item}} dest={{ssl_install_path}}/{{item}}
-#    with_items: ssl_files
+#    with_items: "{{ssl_files}}"
 #    become: yes
 #    tags:
 #      - proxy

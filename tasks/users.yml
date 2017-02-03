@@ -20,7 +20,7 @@
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
-  with_items: jenkins_users
+  with_items: "{{jenkins_users}}"
   when: jenkins_users is defined and jenkins_users_present|failed
   ignore_errors: yes
   become: yes

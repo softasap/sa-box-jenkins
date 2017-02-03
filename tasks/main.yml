@@ -23,7 +23,7 @@
     become: yes
 
   - name: Jenkins | Check first time install
-    command: test -x /var/lib/jenkins/secrets/initialAdminPassword
+    command: test -e /var/lib/jenkins/secrets/initialAdminPassword
     ignore_errors: yes
     register: jenkins_second_time_install
     become: yes
