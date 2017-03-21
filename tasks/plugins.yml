@@ -57,7 +57,7 @@
     return_content: yes
   register: jenkins_plugin_status
   until: "'Pending' not in jenkins_plugin_status.json.data.jobs|map(attribute='installStatus')"
-  retries: 60
+  retries: 120
   delay: 10
 
 - name: Jenkins | Check if we need to restart Jenkins to activate plugins

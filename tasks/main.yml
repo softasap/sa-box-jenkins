@@ -53,6 +53,8 @@
     when: not (jenkins_second_time_install|failed)
     become: yes
 
+  - wait_for: port=8080 delay=20
+
   - name: Jenkins | Get Jenkins crumb
     uri:
       user: "{{jenkins_admin_user}}"
