@@ -27,6 +27,7 @@
     method: POST
     status_code: [200, 302]
   when: jenkins_users is defined and jenkins_users_present|failed
+  retries: 3
   become: yes
   become_user: jenkins
 

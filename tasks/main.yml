@@ -20,7 +20,16 @@
 
   - name: Jenkins | Ensure Jenkins is installed.
     apt: pkg=jenkins state=installed
+    register: jenkins_package_install
     become: yes
+
+  - name: Jenkins | Forced restart after first time package installation
+    service: name=jenkins state=restarted
+    when: jenkins_package_install.changed
+    become: yes
+
+  - wait_for: port=8080 delay=20
+    when: jenkins_package_install.changed
 
   - name: Jenkins | Check first time install
     command: test -e /var/lib/jenkins/secrets/initialAdminPassword
@@ -48,7 +57,7 @@
     become: yes
     when: not (jenkins_second_time_install|failed)
 
-  - name: Jenkins | Forced restart
+  - name: Jenkins | Forced restart in case if there was admin password reset
     service: name=jenkins state=restarted
     when: not (jenkins_second_time_install|failed)
     become: yes
