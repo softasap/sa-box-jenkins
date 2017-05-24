@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+try:
+    from urllib.request import Request, urlopen
+except ImportError:  # python 2
+    from urllib2 import Request, urlopen
+
+import re
+import os
+import sys
+import argparse
+
+valid_packages = ['jre', 'server-jre', 'jdk']
+valid_java_versions = xrange(7, 9, 1)
+
+
+def regex_websearch(url, pattern):
+    req = Request(url)
+    resp = urlopen(req)
+    content = resp.read().decode('UTF-8')
+    resp.close()
+    match = re.search(pattern, content)
+    return match
+
+
+def discover_latest_java(java_version=8, package='server-jre', extension='tar.gz',
+                         architecture='linux-x64'):
+    if package not in valid_packages:
+        print('Invalid Java package selection, valid packages are:')
+        for valid_package in valid_packages:
+            print('\t' + valid_package)
+        return None
+
+    url = "http://www.oracle.com"
+
+    url_1 = url + "/technetwork/java/javase/downloads/index.html"
+    pattern_1 = '\/technetwork\/java/\javase\/downloads\/' + package + str(java_version) + '-downloads-.+?\.html'
+    match = regex_websearch(url_1, pattern_1)
+
+    if match is None:
+        print('[ERROR] Unable to parse java version ' + url_1)
+        return None
+
+    # Finding tar.gz or rpm endpoint
+    url_2 = url + match.group(0)
+    pattern_2 = "http\:\/\/download.oracle\.com\/otn-pub\/java\/jdk\/[7-9]u[0-9]+?-.+?\/" + package + "-[7-9]u[0-9]+?-" + architecture + "." + extension
+    match = regex_websearch(url_2, pattern_2)
+
+    if match is None:
+        print('Selected architecture.extension \"' + architecture + '.' + extension + '\" is not available')
+        print('Visit \"' + url_2 + '\" to see available architectures and extensions')
+        return None
+
+    # Add cookie to request and download the file to current directory
+    download_url = match.group(0)
+    return download_url
+
+
+
+if __name__ == '__main__':
+    selected_extension = "tar.gz"
+    selected_package = "jdk"
+    selected_version = "8"
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-e', '--extension', default="tar.gz")  # can 'store_false' for no-xxx flags
+    parser.add_argument('-p', '--package', default="jdk")
+    parser.add_argument('-v', '--version', default='8')
+    parser.add_argument('-a', '--architecture', default='linux-x64')
+    parser.add_argument('arg', nargs='*') # use '+' for 1 or more args (instead of 0 or more)
+    parsed = parser.parse_args()
+
+    result=discover_latest_java(java_version=parsed.version, package=parsed.package, extension=parsed.extension, architecture=parsed.architecture)
+    if result is None:
+      sys.exit(1)
+    print result
+    sys.exit(0)

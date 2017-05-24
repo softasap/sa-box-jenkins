@@ -1,6 +1,6 @@
 --- # Credits https://github.com/StarterSquad/prudentia/blob/master/prudentia/tasks/ssl-self-certificate.yml
   - name: Self signed | Install last stable
-    apt: update-cache=yes force=yes state=present pkg=openssl
+    package: state=present name=openssl
     become: yes
 
   - name: Self signed | Generate self signed passwordless certificate
