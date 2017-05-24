@@ -1,10 +1,6 @@
 sa-box-jenkins
 ==============
 
-UPD may 2017: Experimental support for CENTOS-7, and potentially other compatible distributions.
-
-UPD sept 2016:  now installs Jenkins 2 by default. See `box-example` role folder to get example of standalone deployment script for your organization.
-
 [![Build Status](https://travis-ci.org/softasap/sa-box-jenkins.svg?branch=master)](https://travis-ci.org/softasap/sa-box-jenkins)
 
 Example of usage:
@@ -328,6 +324,17 @@ Please adjust the path accordingly.
        }
 
 ```
+
+
+# History of changes
+
+1.2.0
+
+UPD may 2017: Experimental support for CENTOS-7, and potentially other compatible distributions.
+
+1.1.0 
+
+UPD sept 2016:  now installs Jenkins 2 by default. See `box-example` role folder to get example of standalone deployment script for your organization.
 
 
 
