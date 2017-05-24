@@ -7,19 +7,39 @@
     become: yes
 
   - name: Jenkins | Ensure dependencies are installed.
-    apt: pkg=curl state=installed
+    package: name=curl state=present
     become: yes
 
-  - name: Jenkins | Add Jenkins apt repository key.
-    apt_key: url="http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key" state=present
-    become: yes
+  - block:
 
-  - name: Jenkins | Add Jenkins apt repository.
-    apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
-    become: yes
+    - name: Jenkins | Add Jenkins apt repository key.
+      apt_key: url="http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key" state=present
+      become: yes
+
+    - name: Jenkins | Add Jenkins apt repository.
+      apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
+      become: yes
+
+    when: ansible_os_family == "Debian"
+
+  - block:
+
+    - name: Jenkins | Add Jenkins yum repository
+      get_url:
+        url: "http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo"
+        dest: /etc/yum.repos.d/jenkins.repo
+      become: yes
+
+    - name: Add Jenkins repo GPG key.
+      rpm_key:
+        state: present
+        key: "https://jenkins-ci.org/redhat/jenkins-ci.org.key"
+      become: yes
+
+    when: ansible_os_family != "Debian"
 
   - name: Jenkins | Ensure Jenkins is installed.
-    apt: pkg=jenkins state=installed
+    package: name=jenkins state=present
     register: jenkins_package_install
     become: yes
 
@@ -37,10 +57,17 @@
     register: jenkins_second_time_install
     become: yes
 
-  - name: Jenkins | Supress wizard mode
+  - name: Jenkins | Supress wizard mode (debian)
     lineinfile: dest="/etc/default/jenkins" insertbefore="^JENKINS_ARGS.*" line="JAVA_ARGS=\"{{ jenkins_java_args }}\""
     when: not (jenkins_second_time_install|failed)
     become: yes
+    when: ansible_os_family == "Debian"
+
+  - name: Jenkins | Supress wizard mode (centos)
+    lineinfile: dest="/etc/sysconfig/jenkins" insertbefore="^JENKINS_ARGS.*" line="JAVA_ARGS=\"{{ jenkins_java_args }}\""
+    when: not (jenkins_second_time_install|failed)
+    become: yes
+    when: ansible_os_family != "Debian"
 
   - name: Jenkins | Remove initial Jenkins password
     file: name=/var/lib/jenkins/secrets/initialAdminPassword state=absent

@@ -2,27 +2,55 @@
     command: test -x /usr/bin/java
     ignore_errors: yes
     register: java_present
-    tags: 
-        -java
-
-  - name: Java | Add apt repository
-    apt_repository: repo='ppa:webupd8team/java'
-    when: java_present|failed
-    become: yes
-    tags: 
-        -java
-
-  - name: Java | Accept the Oracle license before the installation
-    shell: echo oracle-java{{java_version}}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
-    when: java_present|failed
-    become: yes
-    tags: 
+    tags:
         -java
 
 
-  - name: Java | Install
-    apt: update-cache=yes force=yes state=present pkg=oracle-java{{java_version}}-installer
-    when: java_present|failed
-    become: yes
-    tags: 
-        -java
+  - block:
+
+    - name: template java discovery script
+      template: src="{{role_dir}}/templates/java/get_java.py.j2" dest="/tmp/get_java.py" mode="u=rwx,g=rx,o=rx"
+
+    - name: execute java discovery script
+      shell: /tmp/get_java.py --version {{java_version}} --extension rpm
+      register: java_download_url
+
+    - name: download Java RPM
+      get_url:
+        headers='Cookie:gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie'
+        dest="/tmp/java.rpm"
+        url="{{java_download_url.stdout}}"
+        validate_certs="true"
+      become: yes
+
+    - name: install RPM
+      yum: name=/tmp/java.rpm state=present
+      become: yes
+
+    when: ansible_os_family != "Debian" and java_present | failed
+
+  - block:
+
+    - name: Java | Add apt repository
+      apt_repository: repo='ppa:webupd8team/java'
+      when: java_present|failed
+      become: yes
+      tags:
+          -java
+
+    - name: Java | Accept the Oracle license before the installation
+      shell: echo oracle-java{{java_version}}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+      when: java_present|failed
+      become: yes
+      tags:
+          -java
+
+
+    - name: Java | Install
+      apt: update-cache=yes force=yes state=present pkg=oracle-java{{java_version}}-installer
+      when: java_present|failed
+      become: yes
+      tags:
+          -java
+
+    when: ansible_os_family == "Debian"

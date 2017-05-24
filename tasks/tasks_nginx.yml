@@ -10,48 +10,69 @@
     register: nginx_present
     tags: nginx
 
-  - name: Nginx | Add GPG key to apt keyring
-    shell: wget -q -O - http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
-    when: ansible_os_family == "Debian" and nginx_present|failed
-    tags: nginx
-    become: yes
+  - block:
 
-  - name: Nginx | Add Debian apt repository
-    apt_repository: repo="deb http://nginx.org/packages/debian/ {{ansible_distribution_release}} nginx"
-    when: ansible_os_family == "Debian" and ansible_distribution != "Ubuntu" and nginx_present|failed
-    tags: nginx
-    become: yes
+    - name: Nginx | Add GPG key to apt keyring
+      shell: wget -q -O - http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+      when: ansible_os_family == "Debian" and nginx_present|failed
+      tags: nginx
+      become: yes
 
-  - name: Nginx | Add Ubuntu apt repository
-    apt_repository: repo="deb http://nginx.org/packages/ubuntu/ {{ansible_distribution_release}} nginx"
-    when: ansible_distribution == "Ubuntu" and nginx_present|failed
-    tags: nginx
-    become: yes
+    - name: Nginx | Add Debian apt repository
+      apt_repository: repo="deb http://nginx.org/packages/debian/ {{ansible_distribution_release}} nginx"
+      when: ansible_os_family == "Debian" and ansible_distribution != "Ubuntu" and nginx_present|failed
+      tags: nginx
+      become: yes
 
-  - name: Nginx | Install
-    apt: update-cache=yes force=yes state=present pkg=nginx
-    when: ansible_os_family == "Debian" and nginx_present|failed
-    tags: nginx
-    become: yes
+    - name: Nginx | Add Ubuntu apt repository
+      apt_repository: repo="deb http://nginx.org/packages/ubuntu/ {{ansible_distribution_release}} nginx"
+      when: ansible_distribution == "Ubuntu" and nginx_present|failed
+      tags: nginx
+      become: yes
+
+    - name: Nginx | Install (apt)
+      apt: update-cache=yes force=yes state=present pkg=nginx
+      when: nginx_present|failed
+      tags: nginx
+      become: yes
+    when: ansible_os_family == "Debian"
+
+  - block:
+
+    - name: Nginx | Add  RPM official nginx key
+      rpm_key: key=http://nginx.org/keys/nginx_signing.key
+      tags: nginx
+      become: yes
+
+    - name: Nginx | add YUM official nginx repository
+      template: src="{{role_dir}}/templates/nginx/nginx.repo.j2" dest=/etc/yum.repos.d/nginx.repo
+      tags: nginx
+      become: yes
+
+    - name: Nginx | Install (yum)
+      yum: state=present pkg=nginx
+      tags: nginx
+      become: yes
+
+    when: ansible_os_family == 'RedHat'
+
 
   - name: Nginx | Create sites available/enabled directories
     file: path={{item}} state=directory mode=0755
     with_items:
       - /etc/nginx/sites-available
       - /etc/nginx/sites-enabled
-    when: ansible_os_family == "Debian" and nginx_present|failed
     tags: nginx
     become: yes
 
   - name: Nginx | Configure include sites-enabled
     lineinfile: dest=/etc/nginx/nginx.conf regexp=".*sites-enabled.*" line="    include /etc/nginx/sites-enabled/*;" insertbefore="}" state=present
-    when: ansible_os_family == "Debian" and nginx_present|failed
     tags: nginx
     become: yes
 
   - name: Nginx | Disable default site
     file: path=/etc/nginx/default.conf state=absent
-    when: ansible_os_family == "Debian" and nginx_present|failed
+    when:  nginx_present|failed
     tags: nginx
     become: yes
 
@@ -61,7 +82,7 @@
     tags: proxy
 
   - name: Nginx | Reload
-    service: name=nginx state=reloaded
-    when: ansible_os_family == "Debian" and nginx_present|failed
+    service: name=nginx state=reloaded enabled=yes
+    when: nginx_present|failed
     tags: nginx
     become: yes

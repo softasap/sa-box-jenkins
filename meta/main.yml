@@ -24,6 +24,10 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - trusty
+        - xenial
+    - name: EL
+      versions:
+        - 7        
   galaxy_tags:
     - jenkins
     - ubuntu
