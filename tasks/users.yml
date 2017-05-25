@@ -5,46 +5,75 @@
   become: yes
   become_user: jenkins
 
-- name: Jenkins | Create User groovy Script
-  template: src="{{role_dir}}/templates/groovy/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
-  when: jenkins_users_present|failed
+# - name: Jenkins | Create User groovy Script
+#   template: src="{{role_dir}}/templates/groovy/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
+#   when: jenkins_users_present|failed
+#   become: yes
+#   become_user: jenkins
+
+# - name: Jenkins | Enable global matrix strategy groovy Script
+#   template: src="{{role_dir}}/templates/groovy/enable-matrix.groovy.j2" dest="/var/lib/jenkins/enable-matrix.groovy"
+#   when: jenkins_users_present|failed
+#   become: yes
+#   become_user: jenkins
+
+- name: Jenkins | Wait for script window ready
+  uri:
+    user: admin
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    body: "script=println 1"
+    url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
+    method: POST
+    status_code: [200, 302]
+  when: jenkins_users is defined and jenkins_users_present|failed
+  register: script_window_test_result
+  retries: 5
+  until: not (('content' in script_window_test_result) and script_window_test_result.content.find("Jenkins is getting ready to work") != -1)
+  delay: 10
   become: yes
   become_user: jenkins
 
-- name: Jenkins | Enable global matrix strategy groovy Script
-  template: src="{{role_dir}}/templates/groovy/enable-matrix.groovy.j2" dest="/var/lib/jenkins/enable-matrix.groovy"
-  when: jenkins_users_present|failed
-  become: yes
-  become_user: jenkins
+- set_fact:
+    groovy_enable_matrix_auth_template: "{{ lookup('template', role_dir+'/templates/groovy/enable-matrix.groovy.j2') }}"
+
+- debug: var="groovy_enable_matrix_auth_template"
 
 - name: Jenkins | Enable global matrix authorization
   uri:
     user: admin
     password: "{{ jenkins_admin_password }}"
     force_basic_auth: yes
-    body: "script=$(</var/lib/jenkins/enable-matrix.groovy)"
+    body: "script={{groovy_enable_matrix_auth_template  }}"
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
   when: jenkins_users is defined and jenkins_users_present|failed
+  register: groovy_enable_matrix_auth_result
   retries: 3
+  delay: 10
   become: yes
   become_user: jenkins
+
+- debug: var="groovy_enable_matrix_auth_result"
 
 - name: Jenkins | Create Users
   uri:
     user: admin
     password: "{{ jenkins_admin_password }}"
     force_basic_auth: yes
-    body: "script=$(</var/lib/jenkins/create-user.groovy {{item.name}} {{item.password}} {{item.email}})"
+    body: "script={{ lookup('template', role_dir+'/templates/groovy/create-user.groovy.j2') }}"
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
   with_items: "{{jenkins_users}}"
   when: jenkins_users is defined and jenkins_users_present|failed
+  register: groovy_create_users_result
   ignore_errors: yes
   become: yes
   become_user: jenkins
+
+- debug: var="groovy_create_users_result"
 
 - name: Jenkins | Forced restart
   service: name=jenkins state=restarted

@@ -2,9 +2,9 @@ import hudson.model.*
 import hudson.security.*
 import hudson.tasks.Mailer
 
-def userId = args[0]
-def password = args[1]
-def email = args[2]
+def userId = "{{item.name}}"
+def password = "{{item.password}}"
+def email = "{{item.email}}"
 def instance = jenkins.model.Jenkins.instance
 def existingUser = instance.securityRealm.allUsers.find {it.id == userId}
 
