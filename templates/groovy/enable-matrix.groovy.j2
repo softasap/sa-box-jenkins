@@ -6,7 +6,15 @@ def realm = new HudsonPrivateSecurityRealm(false)
 instance.setSecurityRealm(realm)
 
 def strategy = new hudson.security.GlobalMatrixAuthorizationStrategy()
-strategy.add(Jenkins.ADMINISTER, 'authenticated')
+
+def existingUser = instance.securityRealm.allUsers.find {it.id == "{{jenkins_admin_user}}"}
+
+if (existingUser != null) {
+    strategy.add(Jenkins.ADMINISTER, "{{jenkins_admin_user}}")
+} else {
+    strategy.add(Jenkins.ADMINISTER, 'authenticated')
+}
+
 instance.setAuthorizationStrategy(strategy)
 
 instance.save()

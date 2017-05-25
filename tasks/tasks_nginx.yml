@@ -13,10 +13,11 @@
   - block:
 
     - name: Nginx | Add GPG key to apt keyring
-      shell: wget -q -O - http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
-      when: ansible_os_family == "Debian" and nginx_present|failed
-      tags: nginx
+      apt_key: url=http://nginx.org/keys/nginx_signing.key state=present
+      when: nginx_present|failed
       become: yes
+      tags:
+        - nginx
 
     - name: Nginx | Add Debian apt repository
       apt_repository: repo="deb http://nginx.org/packages/debian/ {{ansible_distribution_release}} nginx"
@@ -41,20 +42,22 @@
 
     - name: Nginx | Add  RPM official nginx key
       rpm_key: key=http://nginx.org/keys/nginx_signing.key
+      when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
       tags: nginx
       become: yes
 
     - name: Nginx | add YUM official nginx repository
       template: src="{{role_dir}}/templates/nginx/nginx.repo.j2" dest=/etc/yum.repos.d/nginx.repo
+      when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
       tags: nginx
       become: yes
 
-    - name: Nginx | Install (yum)
-      yum: state=present pkg=nginx
+    - name: Nginx | Install (OS specific yum/dng)
+      package: state=present name=nginx
       tags: nginx
       become: yes
 
-    when: ansible_os_family == 'RedHat'
+    when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Fedora'
 
 
   - name: Nginx | Create sites available/enabled directories
@@ -62,27 +65,36 @@
     with_items:
       - /etc/nginx/sites-available
       - /etc/nginx/sites-enabled
-    tags: nginx
     become: yes
+    tags: 
+      - nginx
+
 
   - name: Nginx | Configure include sites-enabled
     lineinfile: dest=/etc/nginx/nginx.conf regexp=".*sites-enabled.*" line="    include /etc/nginx/sites-enabled/*;" insertbefore="}" state=present
-    tags: nginx
     become: yes
+    tags: 
+      - nginx
+
 
   - name: Nginx | Disable default site
     file: path=/etc/nginx/default.conf state=absent
     when:  nginx_present|failed
-    tags: nginx
     become: yes
+    tags: 
+      - nginx
+
 
   - name: Nginx | Uncomment server_names_hash_bucket_size
     lineinfile: dest=/etc/nginx/nginx.conf regexp="^(\s*)#\s*server_names_hash_bucket_size" line="\1server_names_hash_bucket_size 64;" backrefs=yes
     become: yes
-    tags: proxy
+    tags: 
+      - nginx
 
   - name: Nginx | Reload
     service: name=nginx state=reloaded enabled=yes
-    when: nginx_present|failed
-    tags: nginx
+    when: nginx_present|failed and docker_test is not defined
     become: yes
+    tags: 
+      - nginx
+
