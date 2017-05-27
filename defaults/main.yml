@@ -29,7 +29,7 @@
 
   jenkins_plugins:
     - bitbucket
-    - bitbucket-pullrequest-builder   	
+    - bitbucket-pullrequest-builder
     - blueocean # https://wiki.jenkins-ci.org/display/JENKINS/Blue+Ocean+Plugin 
     - copyartifact # https://wiki.jenkins-ci.org/display/JENKINS/Copy+Artifact+Plugin
     - credentials # https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin
