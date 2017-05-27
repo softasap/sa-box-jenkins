@@ -272,10 +272,9 @@ jenkins_users:
 jenkins_plugins:
   - bitbucket # https://wiki.jenkins-ci.org/display/JENKINS/BitBucket+Plugin
   - bitbucket-pullrequest-builder
-  - build-pipeline-plugin
+  - blueocean # https://wiki.jenkins-ci.org/display/JENKINS/Blue+Ocean+Plugin 
   - copyartifact # https://wiki.jenkins-ci.org/display/JENKINS/Copy+Artifact+Plugin
   - credentials # https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin
-  - delivery-pipeline-plugin # https://wiki.jenkins-ci.org/display/JENKINS/Delivery+Pipeline+Plugin
   - environment-script # https://wiki.jenkins-ci.org/display/JENKINS/Environment+Script+Plugin
   - git
   - ghprb # https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
@@ -287,6 +286,7 @@ jenkins_plugins:
   - parameterized-trigger #https://wiki.jenkins-ci.org/display/JENKINS/Parameterized+Trigger+Plugin
   - rebuild # https://wiki.jenkins-ci.org/display/JENKINS/Rebuild+Plugin
   - ssh
+  - slack # https://wiki.jenkins-ci.org/display/JENKINS/Slack+Plugin 
   - s3 # https://wiki.jenkins-ci.org/display/JENKINS/S3+Plugin
   - throttle-concurrents #https://wiki.jenkins-ci.org/display/JENKINS/Throttle+Concurrent+Builds+Plugin
 ```
