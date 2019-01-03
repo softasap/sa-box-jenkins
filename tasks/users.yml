@@ -1,19 +1,20 @@
 - name: Jenkins CI | Check users are provisioned
-  command: test -f {{jenkins_install_dir}}/users/deploy/config.xml
+  command: test -f {{ jenkins_install_dir }}/users/deploy/config.xml
   ignore_errors: yes
+  changed_when: False
   register: jenkins_users_present
   become: yes
   become_user: jenkins
 
 # - name: Jenkins | Create User groovy Script
-#   template: src="{{role_dir}}/templates/groovy/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
-#   when: jenkins_users_present|failed
+#   template: src="{{ role_dir }}/templates/groovy/create-user.groovy.j2" dest="/var/lib/jenkins/create-user.groovy"
+#   when: jenkins_users_presentis failed
 #   become: yes
 #   become_user: jenkins
 
 # - name: Jenkins | Enable global matrix strategy groovy Script
-#   template: src="{{role_dir}}/templates/groovy/enable-matrix.groovy.j2" dest="/var/lib/jenkins/enable-matrix.groovy"
-#   when: jenkins_users_present|failed
+#   template: src="{{ role_dir }}/templates/groovy/enable-matrix.groovy.j2" dest="/var/lib/jenkins/enable-matrix.groovy"
+#   when: jenkins_users_presentis failed
 #   become: yes
 #   become_user: jenkins
 
@@ -26,15 +27,18 @@
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
-  when: jenkins_users is defined and jenkins_users_present|failed
+  when: jenkins_users is defined and jenkins_users_presentis failed
   register: script_window_test_result
   retries: 5
-  until: not (('content' in script_window_test_result) and script_window_test_result.content.find("Jenkins is getting ready to work") != -1)
+  until: >
+     not (('content' in script_window_test_result)
+     and script_window_test_result.content.find("Jenkins is getting ready to work") != -1)
   delay: 10
   become: yes
   become_user: jenkins
 
-- set_fact:
+- name: Prepare template for enable-matrix.groovy
+  set_fact:
     groovy_enable_matrix_auth_template: "{{ lookup('template', role_dir+'/templates/groovy/enable-matrix.groovy.j2') }}"
 
 - debug: var="groovy_enable_matrix_auth_template"
@@ -44,11 +48,11 @@
     user: admin
     password: "{{ jenkins_admin_password }}"
     force_basic_auth: yes
-    body: "script={{groovy_enable_matrix_auth_template  }}"
+    body: "script={{ groovy_enable_matrix_auth_template }}"
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
-  when: jenkins_users is defined and jenkins_users_present|failed
+  when: jenkins_users is defined and jenkins_users_presentis failed
   register: groovy_enable_matrix_auth_result
   retries: 3
   delay: 10
@@ -66,8 +70,8 @@
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
-  with_items: "{{jenkins_users}}"
-  when: jenkins_users is defined and jenkins_users_present|failed
+  with_items: "{{ jenkins_users }}"
+  when: jenkins_users is defined and jenkins_users_presentis failed
   register: groovy_create_users_result
   ignore_errors: yes
   become: yes
@@ -77,9 +81,9 @@
 
 - name: Jenkins | Forced restart
   service: name=jenkins state=restarted
-  when: jenkins_users_present|failed
+  when: jenkins_users_presentis failed
   become: yes
 
-
-- wait_for: port=8080 delay=20
-  when: jenkins_users_present|failed
+- name: Wait for port 8080 to appear with delay 20 sec
+  wait_for: port=8080 delay=20
+  when: jenkins_users_presentis failed

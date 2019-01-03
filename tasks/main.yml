@@ -8,16 +8,25 @@
 
   - name: Jenkins | Ensure dependencies are installed.
     package: name=curl state=present
+    retries: 3
+    register: result
+    until: result is not failed
     become: yes
 
   - block:
 
     - name: Jenkins | Add Jenkins apt repository key.
       apt_key: url="http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key" state=present
+      retries: 3
+      register: result
+      until: result is not failed
       become: yes
 
     - name: Jenkins | Add Jenkins apt repository.
       apt_repository: repo="deb http://pkg.jenkins-ci.org/debian binary/"  state=present update_cache=yes
+      retries: 3
+      register: result
+      until: result is not failed
       become: yes
 
     when: ansible_os_family == "Debian"
@@ -34,66 +43,83 @@
       rpm_key:
         state: present
         key: "https://jenkins-ci.org/redhat/jenkins-ci.org.key"
+      retries: 3
+      register: result
+      until: result is not failed
       become: yes
 
     when: ansible_os_family != "Debian"
 
   - name: Jenkins | Ensure Jenkins is installed.
     package: name=jenkins state=present
+    retries: 3
     register: jenkins_package_install
+    until: jenkins_package_install is not failed
     become: yes
 
   - name: Jenkins | Forced restart after first time package installation
     service: name=jenkins state=restarted
     when: jenkins_package_install.changed
     become: yes
+    tags:
+      - skip_ansible_lint
 
-  - wait_for: port=8080 delay=20
+  - name: wait for jenkins to respond on 8080
+    wait_for: port=8080 delay=20
     when: jenkins_package_install.changed
+    tags:
+      - skip_ansible_lint
 
   - name: Jenkins | Check first time install
     command: test -e /var/lib/jenkins/secrets/initialAdminPassword
     ignore_errors: yes
     register: jenkins_second_time_install
+    changed_when: False
     become: yes
 
   - name: Jenkins | Supress wizard mode (debian)
     lineinfile: dest="/etc/default/jenkins" insertbefore="^JENKINS_ARGS.*" line="JAVA_ARGS=\"{{ jenkins_java_args }}\""
-    when: not (jenkins_second_time_install|failed)
+    when: not (jenkins_second_time_install is failed) and ansible_os_family == "Debian"
     become: yes
-    when: ansible_os_family == "Debian"
 
   - name: Jenkins | Supress wizard mode (centos)
-    lineinfile: dest="/etc/sysconfig/jenkins" insertbefore="^JENKINS_ARGS.*" line="JAVA_ARGS=\"{{ jenkins_java_args }}\""
-    when: not (jenkins_second_time_install|failed)
+    lineinfile:
+      dest: "/etc/sysconfig/jenkins"
+      insertbefore: "^JENKINS_ARGS.*"
+      line: "JAVA_ARGS=\"{{ jenkins_java_args }}\""
+    when: not (jenkins_second_time_install is failed) and ansible_os_family == "Debian"
     become: yes
-    when: ansible_os_family != "Debian"
 
   - name: Jenkins | Remove initial Jenkins password
     file: name=/var/lib/jenkins/secrets/initialAdminPassword state=absent
     ignore_errors: yes
-    when: not (jenkins_second_time_install|failed)
+    when: not (jenkins_second_time_install is failed)
 
   - name: Jenkins | Create Jenkins admin password hash
     shell: echo -n "{{ jenkins_admin_password }}{ansible_jenkins}" | sha256sum - | awk '{ print $1; }'
-    when: not (jenkins_second_time_install|failed)
+    when: not (jenkins_second_time_install is failed)
     register: jenkins_password_hash
 
   - name: Jenkins | Patch original password hash line
-    lineinfile: dest="/var/lib/jenkins/users/admin/config.xml" regexp='^(\s)*<passwordHash>(.*)' line='      <passwordHash>ansible_jenkins:{{ jenkins_password_hash.stdout }}</passwordHash>' owner="jenkins"
+    lineinfile:
+      dest: "/var/lib/jenkins/users/admin/config.xml"
+      regexp: '^(\s)*<passwordHash>(.*)'
+      line: '      <passwordHash>ansible_jenkins:{{ jenkins_password_hash.stdout }}</passwordHash>'
+      owner: "jenkins"
     become: yes
-    when: not (jenkins_second_time_install|failed)
+    when: not (jenkins_second_time_install is failed)
 
   - name: Jenkins | Forced restart in case if there was admin password reset
     service: name=jenkins state=restarted
-    when: not (jenkins_second_time_install|failed)
+    when: not (jenkins_second_time_install is failed)
     become: yes
 
-  - wait_for: port=8080 delay=20
+  - name: wait for 8080 to appear with delay 20s
+    wait_for: port=8080 delay=20
 
   - name: Jenkins | Get Jenkins crumb
     uri:
-      user: "{{jenkins_admin_user}}"
+      user: "{{ jenkins_admin_user }}"
       password: "{{ jenkins_admin_password }}"
       force_basic_auth: yes
       url: "http://127.0.0.1:8080/crumbIssuer/api/json"

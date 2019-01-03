@@ -16,6 +16,7 @@
     curl -L https://updates.jenkins-ci.org/update-center.json | sed '1d;$d' > /var/lib/jenkins/updates/default.json
     creates=/var/lib/jenkins/updates/default.json
   become: yes
+  tags: skip_ansible_lint
 
 
 - name: Jenkins | Permissions for default.json updates info.
@@ -26,7 +27,8 @@
     mode: 0755
   become: yes
 
-- wait_for: port=8080
+- name: wait for 8080 to appear
+  wait_for: port=8080
 
 - name: Jenkins | Get installed plugins
   uri:

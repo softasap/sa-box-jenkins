@@ -1,0 +1,33 @@
+---
+- name: Converge
+  hosts: all
+
+  pre_tasks:
+    - debug: msg="Pre tasks section for {{ansible_host}}"
+
+    - set_fact:
+        remote_ip_address: "{{ ansible_host }}"
+
+    - include_vars: "playbook_vars.yml"
+    - include_vars: "jenkins_vars.yml"
+    - include_vars: "jenkins_secure_vars.yml"
+
+  roles:
+     - {
+         role: "sa-box-jenkins",
+         jenkins_domain: "{{my_jenkins_domain}}",
+         jenkins_host: "{{my_jenkins_host}}",
+
+         jenkins_admin_user: "{{my_jenkins_admin_user}}",
+         jenkins_admin_password: "{{my_jenkins_admin_password}}",
+         # Admin and deploy users are REQUIRED. Feel free to redefine or amend passwords
+
+         jenkins_users: "{{my_jenkins_users}}",
+
+         jenkins_plugins: "{{my_jenkins_plugins}}",
+
+         java_version: "{{my_java_version}}",
+
+         option_serve_over_http: true
+       }
+

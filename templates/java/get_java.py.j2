@@ -14,6 +14,16 @@ import argparse
 valid_packages = ['jre', 'server-jre', 'jdk']
 valid_java_versions = xrange(7, 9, 1)
 
+current_java_download_location= "http://download.oracle.com/otn-pub/java/jdk/"
+alternate_java_6_7_download_mirror= "{{alternative_java_6_7_mirror}}"
+
+java_download_locations = [
+  "/technetwork/java/javase/downloads/java-archive-javase8-2177648.html",
+  "/technetwork/java/javase/downloads/java-archive-downloads-javase7-521261.html",
+  "/technetwork/java/javase/downloads/java-archive-downloads-javase6-419409.html",
+  "/technetwork/java/javase/downloads/java-archive-downloads-javase6-419409.html",
+  "/technetwork/java/javasebusiness/downloads/java-archive-downloads-javase5-419410.html"
+]
 
 def regex_websearch(url, pattern):
     req = Request(url)
@@ -32,43 +42,47 @@ def discover_latest_java(java_version=8, package='server-jre', extension='tar.gz
             print('\t' + valid_package)
         return None
 
-    url = "http://www.oracle.com"
+    url = "https://www.oracle.com"
 
     url_1 = url + "/technetwork/java/javase/downloads/index.html"
     pattern_1 = '\/technetwork\/java/\javase\/downloads\/' + package + str(java_version) + '-downloads-.+?\.html'
     match = regex_websearch(url_1, pattern_1)
 
-    if match is None:
-        print('[ERROR] Unable to parse java version ' + url_1)
-        return None
+    search_pattern = "https\:\/\/download.oracle\.com\/otn(-pub)?\/java\/jdk\/[" + java_version + "]u[0-9]+?-.+?\/(" + package + "-[" + java_version + "]u[0-9]+?-" + architecture + "." + extension + ")"
 
-    # Finding tar.gz or rpm endpoint
-    url_2 = url + match.group(0)
-    pattern_2 = "http\:\/\/download.oracle\.com\/otn-pub\/java\/jdk\/[7-9]u[0-9]+?-.+?\/" + package + "-[7-9]u[0-9]+?-" + architecture + "." + extension
-    match = regex_websearch(url_2, pattern_2)
+    if match is None:
+        download_locations = java_download_locations
+    else:
+        download_locations = [match.group(0)]
+
+
+    match = None
+
+    for location in download_locations:
+      url_2 = url + location
+      pattern_2 = search_pattern
+      match = regex_websearch(url_2, pattern_2)
+      if match is not None:
+          break;
 
     if match is None:
         print('Selected architecture.extension \"' + architecture + '.' + extension + '\" is not available')
         print('Visit \"' + url_2 + '\" to see available architectures and extensions')
         return None
 
-    # Add cookie to request and download the file to current directory
-    download_url = match.group(0)
+    if int(java_version) >= 8:
+      download_url = match.group(0)
+    else:
+      download_url = alternate_java_6_7_download_mirror + match.group(2)
     return download_url
 
-
-
 if __name__ == '__main__':
-    selected_extension = "tar.gz"
-    selected_package = "jdk"
-    selected_version = "8"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-e', '--extension', default="tar.gz")  # can 'store_false' for no-xxx flags
+    parser.add_argument('-e', '--extension', default="tar.gz")
     parser.add_argument('-p', '--package', default="jdk")
     parser.add_argument('-v', '--version', default='8')
     parser.add_argument('-a', '--architecture', default='linux-x64')
-    parser.add_argument('arg', nargs='*') # use '+' for 1 or more args (instead of 0 or more)
     parsed = parser.parse_args()
 
     result=discover_latest_java(java_version=parsed.version, package=parsed.package, extension=parsed.extension, architecture=parsed.architecture)
@@ -76,3 +90,4 @@ if __name__ == '__main__':
       sys.exit(1)
     print result
     sys.exit(0)
+
