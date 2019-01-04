@@ -1,56 +1,266 @@
+---
   - name: Java | Check if is present
     command: test -x /usr/bin/java
     ignore_errors: yes
     register: java_present
     tags:
         -java
+        -skip_ansible_lint
 
+  - name: setting fact for java_alias
+    set_fact:
+      java_alias: "java-{{ java_version }}-oracle"
+    when: java_alias is not defined
+
+  - name: setting fact for java_folder
+    set_fact:
+      java_folder: "/usr/lib/jvm"
+    when: java_folder is not defined
+
+  - block:
+      - debug: msg="Warning, you requested historic java installation not available from oracle download location"
+
+      - debug: msg="Role will use alternative mirror {{ alternative_java_6_7_mirror | default ('SPECIFY') }}"
+
+      - debug: msg="If you are ok with it, set option_accept_non_oracle_mirror = true"
+
+      - debug: msg="As an additional precaution hash will be validated"
+
+      - name: due to java_version in 6-7, set java_debian_install_method to source
+        set_fact:
+          java_debian_install_method: source
+
+    when:  (java_present is failed) and (java_version in ["6", "7", 6, 7])
 
   - block:
 
-    - name: template java discovery script
-      template: src="{{role_dir}}/templates/java/get_java.py.j2" dest="/tmp/get_java.py" mode="u=rwx,g=rx,o=rx"
+      - name: By default setting java_debian_install_method to installer
+        set_fact:
+          java_debian_install_method: installer
+
+    when: >
+       (java_debian_install_method is not defined)
+       and not (java_version in ["6", "7", 6, 7])
+
+
+  - name: template java discovery script
+    template: src="{{ role_dir }}/templates/java/get_java.py.j2" dest="/tmp/get_java.py" mode="u=rwx,g=rx,o=rx"
+
+  - debug: msg="installing using {{ java_debian_install_method }} on {{ ansible_os_family }}"
+
+  - block:
 
     - name: execute java discovery script
-      shell: /tmp/get_java.py --version {{java_version}} --extension rpm
+      command: /tmp/get_java.py --version {{ java_version }} --extension rpm
+      failed_when: "'is not available' in java_download_url.stdout"
       register: java_download_url
+
+    - debug: msg="{{ java_download_url.stdout }}"
 
     - name: download Java RPM
       get_url:
         headers='Cookie:gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie'
         dest="/tmp/java.rpm"
-        url="{{java_download_url.stdout}}"
+        url="{{ java_download_url.stdout }}"
         validate_certs="true"
-      become: yes
+      become: "{{ 'no' if role_no_become is defined else 'yes' }}"
 
     - name: install RPM
       package: name=/tmp/java.rpm state=present
-      become: yes
+      become: "{{ 'no' if role_no_become is defined else 'yes' }}"
 
-    when: (ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Fedora') and java_present | failed
+    when: >
+        (ansible_distribution == 'RedHat'
+        or ansible_distribution == 'CentOS'
+        or ansible_distribution == 'Fedora')
+        and java_present is failed
+
+  - debug: msg="installer block"
 
   - block:
 
     - name: Java | Add apt repository
       apt_repository: repo='ppa:webupd8team/java'
-      when: java_present|failed
-      become: yes
+      when: java_present is failed
+      become: "{{ 'no' if role_no_become is defined else 'yes' }}"
       tags:
           -java
 
     - name: Java | Accept the Oracle license before the installation
-      shell: echo oracle-java{{java_version}}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
-      when: java_present|failed
-      become: yes
+      shell: >
+          echo oracle-java{{ java_version }}-installer shared/accepted-oracle-license-v1-1 select true |
+          /usr/bin/debconf-set-selections
+      when: java_present is failed
+      become: "{{ 'no' if role_no_become is defined else 'yes' }}"
       tags:
           -java
 
 
     - name: Java | Install
-      apt: update-cache=yes force=yes state=present pkg=oracle-java{{java_version}}-installer
-      when: java_present|failed
-      become: yes
+      apt: update-cache=yes force=yes state=present pkg=oracle-java{{ java_version }}-installer
+      retries: 3
+      register: result
+      until: not result is failed
+      when: java_present is failed
+      become: "{{ 'no' if role_no_become is defined else 'yes' }}"
       tags:
           -java
 
-    when: ansible_os_family == "Debian"
+    when: ansible_os_family == "Debian" and java_debian_install_method == "installer"
+
+  - debug: msg="tar.gz block"
+
+  - block:
+
+      - block:
+
+              - name: Java | execute java discovery script
+                shell: /tmp/get_java.py --version {{ java_version }} --extension tar.gz
+                failed_when: "'is not available' in java_download_url.stdout"
+                register: java_download_url
+
+              - set_fact:
+                  java_download_file: "{{ java_download_url.stdout.rsplit('/', 1)[-1] }}"
+                  detected_download_url: "{{ java_download_url.stdout }}"
+
+        when: custom_java_download_url is not defined
+
+      - block:
+
+              - name: Java | confirm custom download location
+                shell: "echo {{ custom_java_download_url }}"
+                when: custom_java_download_url is defined
+                register: java_download_url_custom
+
+
+              - set_fact:
+                  detected_download_url: "{{ custom_java_download_url }}"
+                  java_download_file: "{{ java_download_url_custom.stdout.rsplit('/', 1)[-1] }}"
+
+
+        when: custom_java_download_url is defined
+
+      - name: Java | summary of choice for download location
+        command: "echo {{ detected_download_url }}"
+        register: java_download_url
+
+      - name: Java | download Java tar.gz (with checksum validation)
+        get_url:
+          headers='Cookie:gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie'
+          dest="/tmp/java.tar.gz"
+          url="{{ java_download_url.stdout }}"
+          validate_certs="true"
+          checksum="{{ known_hashes[java_download_file] }}"
+        when: option_validate_checksum | default(False)
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | download Java tar.gz (without checksum validation)
+        get_url:
+          headers='Cookie:gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie'
+          dest="/tmp/java.tar.gz"
+          url="{{ java_download_url.stdout }}"
+          validate_certs="true"
+        when: not option_validate_checksum | default(False)
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+
+      - name: Java | Extract Java archive
+        unarchive:
+          src: /tmp/java.tar.gz
+          dest: /tmp
+#        command: "tar -xzf /tmp/java.tar.gz -C /tmp"
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | Detect jdk_folder
+        shell: find * -maxdepth 0 -type d | grep jdk1.{{ java_version }}
+        args:
+          chdir: /tmp
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        register: jdk_folder_raw
+        tags:
+            -java
+
+      - name: set fact for jdk_folder
+        set_fact:
+          jdk_folder: "{{ jdk_folder_raw.stdout }}"
+
+      - name: Java | Fix ownership
+        file: state=directory path=/tmp/{{ jdk_folder }} owner=root group=root recurse=yes
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | Create Java folder
+        file: "state=directory path={{ java_folder }}"
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | Ensure destination folder is clean
+        file: path="{{ java_folder }}/{{ jdk_folder }}" state="absent"
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | Move Java to final folder
+        command: "mv /tmp/{{ jdk_folder }} {{ java_folder }}"
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: >
+            Java | Create symlink for easier update
+            ln -s {{ java_folder }}/{{ jdk_folder }} {{ java_folder }}/{{ java_alias }}
+        file:
+          state: link
+          src: "{{ java_folder }}/{{ jdk_folder }}/"
+          dest: "{{ java_folder }}/{{ java_alias }}"
+        # shell: ln -s {{ java_folder }}/{{ jdk_folder }}/ {{ java_folder }}/{{ java_alias }}
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | Make Java available for system
+        command: 'update-alternatives --install "/usr/bin/java" "java" "{{ java_folder }}/{{ java_alias }}/bin/java" 1'
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | Set JAVA_HOME
+        lineinfile:
+          dest: /etc/environment
+          state: present
+          regexp: "^JAVA_HOME=*"
+          line: "JAVA_HOME={{ java_folder }}/{{ java_alias }}/"
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+      - name: Java | add {{ java_folder }}/{{ java_alias }}/bin to path
+        lineinfile:
+          dest: /etc/environment
+          state: present
+          backrefs: yes
+          regexp: 'PATH=(["]*)((?!.*?{{ java_folder }}/{{ java_alias }}/bin).*?)(["]*)$'
+          line: PATH=\1\2:{{ java_folder }}/{{ java_alias }}/bin\3"
+        become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+        tags:
+            -java
+
+    when: ansible_os_family == "Debian" and java_debian_install_method == "source"
+
+  - name: Java | Container aware, cleanup temporary artifacts
+    file: path="/tmp/{{ item }}" state="absent"
+    become: "{{ 'no' if role_no_become is defined else 'yes' }}"
+    with_items:
+      - get_java.py
+      - java.rpm
+      - java.tar.gz
+    tags:
+      -java

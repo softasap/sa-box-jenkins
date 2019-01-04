@@ -1,0 +1,10 @@
+ my_jenkins_admin_user: admin
+ my_jenkins_admin_password: n9V1qk6b16kZ2TSI
+ # Admin and deploy users are REQUIRED. Feel free to redefine or amend passwords
+
+ my_jenkins_users:
+   - {
+     name: "deploy",
+     password: "ltvn0D3hqMY17VrJ",
+     email: "no-reply@localhost"
+     }

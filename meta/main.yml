@@ -27,12 +27,12 @@ galaxy_info:
         - xenial
     - name: EL
       versions:
-        - 7        
+        - 7
   galaxy_tags:
     - jenkins
     - ubuntu
     - buildserver
-    - continious integration
+    - continiousintegration
   #platforms:
   #- name: EL
   #  versions:
