@@ -7,7 +7,7 @@
 
  my_java_version: 8
 
- my_jenkins_domain: "littlebigmake.local"
+ my_jenkins_domain: "jenkins.local"
  my_jenkins_host: "cd"
 
  my_jenkins_plugins:

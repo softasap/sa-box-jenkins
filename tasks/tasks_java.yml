@@ -39,8 +39,7 @@
           java_debian_install_method: installer
 
     when: >
-       (java_present is failed)
-       and (java_debian_install_method is not defined)
+       (java_debian_install_method is not defined)
        and not (java_version in ["6", "7", 6, 7])
 
 
@@ -74,7 +73,7 @@
         (ansible_distribution == 'RedHat'
         or ansible_distribution == 'CentOS'
         or ansible_distribution == 'Fedora')
-        and java_present | failed
+        and java_present is failed
 
   - debug: msg="installer block"
 
@@ -101,7 +100,7 @@
       apt: update-cache=yes force=yes state=present pkg=oracle-java{{ java_version }}-installer
       retries: 3
       register: result
-      until: not result.failed
+      until: not result is failed
       when: java_present is failed
       become: "{{ 'no' if role_no_become is defined else 'yes' }}"
       tags:

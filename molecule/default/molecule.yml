@@ -5,6 +5,8 @@ driver:
   name: vagrant
   provider:
     name: virtualbox
+    options:
+      memory: 1024
 # lint:
 #   name: yamllint
 platforms:
@@ -16,16 +18,16 @@ platforms:
   #   #     auto_config: true    
   # - name: xenial
   #   box: ubuntu/xenial64
-   - name: bionic
-     box: ubuntu/bionic64
+  #  - name: bionic
+  #    box: ubuntu/bionic64
     # interfaces:
     #   - network_name: public_network
     #     type: dhcp
     #     auto_config: true
   # - name: centos6
   #   box: centos/6    
-  #- name: centos7
-  #  box: centos/7
+  - name: centos7
+    box: centos/7
   # - name: fedora28
   #   box: generic/fedora28
   # - name: alpine

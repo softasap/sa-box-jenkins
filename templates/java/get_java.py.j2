@@ -15,7 +15,7 @@ valid_packages = ['jre', 'server-jre', 'jdk']
 valid_java_versions = xrange(7, 9, 1)
 
 current_java_download_location= "http://download.oracle.com/otn-pub/java/jdk/"
-alternate_java_6_7_download_mirror= "{{alternative_java_6_7_mirror}}"
+alternate_java_6_7_download_mirror= "{{ alternative_java_6_7_mirror  | default ('SPECIFY') }}"
 
 java_download_locations = [
   "/technetwork/java/javase/downloads/java-archive-javase8-2177648.html",

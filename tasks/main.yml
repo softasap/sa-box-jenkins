@@ -87,7 +87,7 @@
       dest: "/etc/sysconfig/jenkins"
       insertbefore: "^JENKINS_ARGS.*"
       line: "JAVA_ARGS=\"{{ jenkins_java_args }}\""
-    when: not (jenkins_second_time_install is failed) and ansible_os_family == "Debian"
+    when: not (jenkins_second_time_install is failed) and ansible_os_family == "CentOS"
     become: yes
 
   - name: Jenkins | Remove initial Jenkins password
@@ -100,9 +100,23 @@
     when: not (jenkins_second_time_install is failed)
     register: jenkins_password_hash
 
+  - name: Jenkins | Detect default admin initial folder (1/2)
+    shell: "ls /var/lib/jenkins/users/ | grep admin"
+    changed_when: False
+    when: not (jenkins_second_time_install is failed)
+    become: yes
+    register: jenkins_admin_user_folder_raw
+
+  - name: Jenkins | Detect default admin initial folder (2/2)
+    set_fact:
+      jenkins_admin_user_folder: "{{ jenkins_admin_user_folder_raw.stdout }}"
+    changed_when: False
+    register: jenkins_admin_folder_raw
+    when: not (jenkins_second_time_install is failed)    
+
   - name: Jenkins | Patch original password hash line
     lineinfile:
-      dest: "/var/lib/jenkins/users/admin/config.xml"
+      dest: "/var/lib/jenkins/users/{{ jenkins_admin_user_folder }}/config.xml"
       regexp: '^(\s)*<passwordHash>(.*)'
       line: '      <passwordHash>ansible_jenkins:{{ jenkins_password_hash.stdout }}</passwordHash>'
       owner: "jenkins"
