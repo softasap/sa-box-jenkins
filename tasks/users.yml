@@ -27,6 +27,9 @@
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   when: jenkins_users is defined and jenkins_users_present is failed
   register: script_window_test_result
   retries: 5
@@ -52,6 +55,9 @@
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   when: jenkins_users is defined and jenkins_users_present is failed
   register: groovy_enable_matrix_auth_result
   retries: 3
@@ -70,6 +76,9 @@
     url: "http://127.0.0.1:8080/scriptText?{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   with_items: "{{ jenkins_users }}"
   when: jenkins_users is defined and jenkins_users_present is failed
   register: groovy_create_users_result
