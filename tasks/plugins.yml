@@ -37,6 +37,9 @@
     force_basic_auth: yes
     url: "http://127.0.0.1:8080/pluginManager/api/json?tree=plugins[shortName]&{{ jenkins_crumb_token }}"
     return_content: yes
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   register: jenkins_installed_plugins
 
 - name: Jenkins | Install plugins
@@ -47,6 +50,9 @@
     url: "http://127.0.0.1:8080/pluginManager/install?plugin.{{ item }}.default=on&{{ jenkins_crumb_token }}"
     method: POST
     status_code: [200, 302]
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   when: item not in jenkins_installed_plugins.json.plugins|map(attribute='shortName')|list
   with_items: "{{ jenkins_plugins }}"
 
@@ -57,6 +63,9 @@
     force_basic_auth: yes
     url: "http://127.0.0.1:8080/updateCenter/installStatus?{{ jenkins_crumb_token }}"
     return_content: yes
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   register: jenkins_plugin_status
   until: "'Pending' not in jenkins_plugin_status.json.data.jobs|map(attribute='installStatus')"
   retries: 120
@@ -70,6 +79,9 @@
     url: "http://127.0.0.1:8080/updateCenter/api/json\
     ?tree=restartRequiredForCompletion&{{ jenkins_crumb_token }}"
     return_content: yes
+    headers:
+      Jenkins-Crumb: '{{ crumb_token.json.crumb }}'
+      Cookie: '{{ crumb_token.set_cookie }}'
   register: jenkins_restart_required
 
 - name: Jenkins | Restart Jenkins to activate new plugins

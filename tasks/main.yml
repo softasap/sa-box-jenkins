@@ -112,7 +112,7 @@
       jenkins_admin_user_folder: "{{ jenkins_admin_user_folder_raw.stdout }}"
     changed_when: False
     register: jenkins_admin_folder_raw
-    when: not (jenkins_second_time_install is failed)    
+    when: not (jenkins_second_time_install is failed)
 
   - name: Jenkins | Patch original password hash line
     lineinfile:
@@ -146,13 +146,16 @@
   - name: Set crumb token
     set_fact:
       jenkins_crumb_token: "{{ crumb_token.json.crumbRequestField }}={{ crumb_token.json.crumb }}"
+      jenkins_crumb_token_header: "{{ crumb_token.json.crumbRequestField }}:{{ crumb_token.json.crumb }}"
+
+  - debug: var="jenkins_crumb_token"
 
   - name: Jenkins | Plugins
-    include: "plugins.yml"
+    include_tasks: "plugins.yml"
 
 
   - name: Jenkins | Users
-    include: "users.yml"
+    include_tasks: "users.yml"
 
   - name: Jenkins | Nginx proxy
-    include: "nginx_proxy.yml"
+    include_tasks: "nginx_proxy.yml"
