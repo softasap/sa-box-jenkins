@@ -51,6 +51,3 @@
     become: yes
     tags:
       - java
-
-
-

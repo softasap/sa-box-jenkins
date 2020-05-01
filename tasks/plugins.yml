@@ -1,4 +1,3 @@
-
 ---
 # Jenkins doesn't allow updates via CLI, though that is required before plugins
 # can be installed via CLI. See: https://gist.github.com/rowan-m/1026918
@@ -17,7 +16,6 @@
     creates=/var/lib/jenkins/updates/default.json
   become: yes
   tags: skip_ansible_lint
-
 
 - name: Jenkins | Permissions for default.json updates info.
   file:
