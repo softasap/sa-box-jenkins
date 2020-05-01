@@ -8,3 +8,22 @@ env:
 script:
   - molecule converge -- --limit="localhost,${INSTANCE}"
 ```
+
+
+Stages
+
+└── default
+    ├── lint
+    ├── dependency
+    ├── cleanup
+    ├── destroy
+    ├── syntax
+    ├── create
+    ├── prepare
+    ├── converge
+    ├── idempotence
+    ├── side_effect
+    ├── verify
+    ├── cleanup
+    └── destroy
+

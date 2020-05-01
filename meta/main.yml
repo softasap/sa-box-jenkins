@@ -25,6 +25,7 @@ galaxy_info:
       versions:
         - trusty
         - xenial
+        - focal 
     - name: EL
       versions:
         - 7
